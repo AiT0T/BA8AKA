@@ -89,29 +89,48 @@ jobs:
           source: ${{ env.TAR_FILE }}
           target: /srv/ba8aka/releases/
 
-      - name: Unpack & Restart on server
+            - name: Unpack & Restart on server
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          # 如有非 22 端口再加：port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
-            sudo mkdir -p /srv/ba8aka/releases
-            cd /srv/ba8aka/releases
-            TAR=release-${{ github.sha }}.tgz
-            DIR=${TAR%.tgz}
-            mkdir -p "$DIR"
-            tar xzf "$TAR" -C "$DIR"
+            set -euo pipefail
+            TAR="release-${{ github.sha }}.tgz"
+            BASE="/srv/ba8aka"
+            REL="$BASE/releases"
+            CUR="$BASE/current"
+            SHARED_ENV="$BASE/shared/.env.local"
+
+            # 确保目录存在
+            sudo mkdir -p "$REL" "$BASE/shared"
+
+            cd "$REL"
+            # 确认上传的包存在
+            if [ ! -f "$TAR" ]; then
+              echo "ERROR: $REL/$TAR not found"; ls -la "$REL"; exit 1
+            fi
+
+            DIR="${TAR%.tgz}"
+            sudo mkdir -p "$DIR"
+            sudo tar xzf "$TAR" -C "$DIR"
 
             # 运行期环境变量
-            ln -sf /srv/ba8aka/shared/.env.local "$DIR/.env.local"
+            if [ -f "$SHARED_ENV" ]; then
+              sudo ln -sf "$SHARED_ENV" "$DIR/.env.local"
+            else
+              echo "WARN: $SHARED_ENV 不存在，请先在服务器创建"; exit 1
+            fi
 
-            # 切换 current
-            ln -sfn "$DIR" /srv/ba8aka/current
-            cd /srv/ba8aka/current
+            # 切换 current 到新版本（绝对路径，避免相对路径问题）
+            sudo ln -sfn "$REL/$DIR" "$CUR"
+            sudo ls -la "$BASE"
 
-            # 判断是否为 standalone 产物
+            # 进入当前版本目录
+            cd "$CUR"
+
             if [ -f ".next/standalone/server.js" ]; then
               echo "==> Start as standalone"
               pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
@@ -119,9 +138,7 @@ jobs:
               pm2 save
             else
               echo "==> Standalone not found, fallback to next start"
-              # 确保有 pnpm
               command -v pnpm >/dev/null 2>&1 || sudo npm i -g pnpm
-              # 只装生产依赖
               pnpm install --prod --frozen-lockfile || pnpm install --prod
               pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
               pm2 start "pnpm start" --name ba8aka --time --node-args="--max-old-space-size=384"
