@@ -1,4 +1,4 @@
-name: Build & Deploy (Standalone)
+name: Build & Deploy (Standalone with Fallback)
 
 on:
   push:
@@ -36,24 +36,7 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      - name: Check required env (debug)
-        env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
-          OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
-          OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
-          OSS_REGION: ${{ secrets.OSS_REGION }}
-        run: |
-          set -e
-          for v in MONGODB_URI OSS_BUCKET OSS_ACCESS_KEY_ID OSS_ACCESS_KEY_SECRET OSS_REGION; do
-            if [ -z "${!v}" ]; then
-              echo "::error ::$v is EMPTY"
-              exit 1
-            else
-              echo "$v=***set***"
-            fi
-          done
-
+      # 构建期需要的环境变量（含 OSS/Mongo 等）
       - name: Build (standalone)
         env:
           NODE_OPTIONS: "--max-old-space-size=1024"
@@ -67,15 +50,34 @@ jobs:
           OSS_REGION: ${{ secrets.OSS_REGION }}
         run: pnpm build
 
+      - name: Inspect .next
+        run: |
+          echo "---- .next tree ----"
+          ls -la .next || true
+          ls -la .next/standalone || true
+          ls -la .next/static || true
 
-      - name: Pack artifacts
+      - name: Pack artifacts (standalone if exists, otherwise full .next)
         run: |
           TAR=release-${{ github.sha }}.tgz
-          tar czf $TAR \
-            .next/standalone \
-            .next/static \
-            public \
-            next.config.js
+          if [ -d ".next/standalone" ]; then
+            echo "Pack standalone build"
+            tar czf $TAR \
+              .next/standalone \
+              .next/static \
+              public \
+              next.config.js \
+              package.json \
+              pnpm-lock.yaml
+          else
+            echo "Standalone not found, pack full .next (fallback)"
+            tar czf $TAR \
+              .next \
+              public \
+              next.config.js \
+              package.json \
+              pnpm-lock.yaml
+          fi
           echo "TAR_FILE=$TAR" >> $GITHUB_ENV
 
       - name: Upload to server
@@ -84,7 +86,6 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          # 如果你的 SSH 端口不是 22，再额外加一行： port: ${{ secrets.SSH_PORT }}
           source: ${{ env.TAR_FILE }}
           target: /srv/ba8aka/releases/
 
@@ -94,7 +95,6 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          # 如果你的 SSH 端口不是 22，再额外加一行： port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
             sudo mkdir -p /srv/ba8aka/releases
@@ -104,14 +104,26 @@ jobs:
             mkdir -p "$DIR"
             tar xzf "$TAR" -C "$DIR"
 
-            # 链接共享环境变量（服务器上的运行期 .env）
+            # 运行期环境变量
             ln -sf /srv/ba8aka/shared/.env.local "$DIR/.env.local"
 
-            # 切换当前版本
+            # 切换 current
             ln -sfn "$DIR" /srv/ba8aka/current
             cd /srv/ba8aka/current
 
-            # 启动 standalone 产物
-            pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
-            pm2 start "node .next/standalone/server.js" --name ba8aka --time --node-args="--max-old-space-size=384"
-            pm2 save
+            # 判断是否为 standalone 产物
+            if [ -f ".next/standalone/server.js" ]; then
+              echo "==> Start as standalone"
+              pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
+              pm2 start "node .next/standalone/server.js" --name ba8aka --time --node-args="--max-old-space-size=384"
+              pm2 save
+            else
+              echo "==> Standalone not found, fallback to next start"
+              # 确保有 pnpm
+              command -v pnpm >/dev/null 2>&1 || sudo npm i -g pnpm
+              # 只装生产依赖
+              pnpm install --prod --frozen-lockfile || pnpm install --prod
+              pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
+              pm2 start "pnpm start" --name ba8aka --time --node-args="--max-old-space-size=384"
+              pm2 save
+            fi
