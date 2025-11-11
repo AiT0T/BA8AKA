@@ -3,18 +3,16 @@ name: Build & Deploy (Standalone with Fallback)
 on:
   push:
     branches: [ master ]
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           check-latest: true
@@ -22,8 +20,7 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v3
         with:
           version: 9
           run_install: false
@@ -36,10 +33,9 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      # 构建期需要的环境变量（含 OSS/Mongo 等）
       - name: Build (standalone)
         env:
-          NODE_OPTIONS: "--max-old-space-size=1024"
+          NODE_OPTIONS: --max-old-space-size=1024
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
@@ -52,17 +48,17 @@ jobs:
 
       - name: Inspect .next
         run: |
-          echo "---- .next tree ----"
           ls -la .next || true
           ls -la .next/standalone || true
           ls -la .next/static || true
 
-      - name: Pack artifacts (standalone if exists, otherwise full .next)
+      - name: Pack artifacts
         run: |
+          set -e
           TAR=release-${{ github.sha }}.tgz
           if [ -d ".next/standalone" ]; then
-            echo "Pack standalone build"
-            tar czf $TAR \
+            echo "Pack standalone"
+            tar czf "$TAR" \
               .next/standalone \
               .next/static \
               public \
@@ -70,15 +66,15 @@ jobs:
               package.json \
               pnpm-lock.yaml
           else
-            echo "Standalone not found, pack full .next (fallback)"
-            tar czf $TAR \
+            echo "Pack full .next (fallback)"
+            tar czf "$TAR" \
               .next \
               public \
               next.config.js \
               package.json \
               pnpm-lock.yaml
           fi
-          echo "TAR_FILE=$TAR" >> $GITHUB_ENV
+          echo "TAR_FILE=$TAR" >> "$GITHUB_ENV"
 
       - name: Upload to server
         uses: appleboy/scp-action@v0.1.7
@@ -89,13 +85,12 @@ jobs:
           source: ${{ env.TAR_FILE }}
           target: /srv/ba8aka/releases/
 
-            - name: Unpack & Restart on server
+      - name: Unpack & Restart on server
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          # 如有非 22 端口再加：port: ${{ secrets.SSH_PORT }}
           script: |
             set -euo pipefail
             TAR="release-${{ github.sha }}.tgz"
@@ -104,11 +99,8 @@ jobs:
             CUR="$BASE/current"
             SHARED_ENV="$BASE/shared/.env.local"
 
-            # 确保目录存在
             sudo mkdir -p "$REL" "$BASE/shared"
-
             cd "$REL"
-            # 确认上传的包存在
             if [ ! -f "$TAR" ]; then
               echo "ERROR: $REL/$TAR not found"; ls -la "$REL"; exit 1
             fi
@@ -117,27 +109,20 @@ jobs:
             sudo mkdir -p "$DIR"
             sudo tar xzf "$TAR" -C "$DIR"
 
-            # 运行期环境变量
             if [ -f "$SHARED_ENV" ]; then
               sudo ln -sf "$SHARED_ENV" "$DIR/.env.local"
             else
-              echo "WARN: $SHARED_ENV 不存在，请先在服务器创建"; exit 1
+              echo "WARN: $SHARED_ENV 不存在"; exit 1
             fi
 
-            # 切换 current 到新版本（绝对路径，避免相对路径问题）
             sudo ln -sfn "$REL/$DIR" "$CUR"
-            sudo ls -la "$BASE"
-
-            # 进入当前版本目录
             cd "$CUR"
 
             if [ -f ".next/standalone/server.js" ]; then
-              echo "==> Start as standalone"
               pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
               pm2 start "node .next/standalone/server.js" --name ba8aka --time --node-args="--max-old-space-size=384"
               pm2 save
             else
-              echo "==> Standalone not found, fallback to next start"
               command -v pnpm >/dev/null 2>&1 || sudo npm i -g pnpm
               pnpm install --prod --frozen-lockfile || pnpm install --prod
               pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
