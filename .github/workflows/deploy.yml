@@ -13,22 +13,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 先装 Node（不使用 cache 选项，避免找 pnpm）
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+          check-latest: true
 
+      # 启用 corepack + 安装 pnpm（这一步必须在 install/build 之前）
+      - name: Enable corepack
+        run: corepack enable
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9
+          run_install: false
+
+      - name: Show versions
+        run: |
+          node -v
+          pnpm -v
 
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
       - name: Build (standalone)
-        run: pnpm build
+        env:
+          # 给 Node 一点限制和稳定性（可选）
+          NODE_OPTIONS: "--max-old-space-size=1024"
+        run: |
+          # 确保使用 standalone 输出
+          pnpm build
 
       - name: Pack artifacts
         run: |
@@ -66,14 +81,14 @@ jobs:
             mkdir -p "$DIR"
             tar xzf "$TAR" -C "$DIR"
 
-            # 链接共享的环境变量
+            # 链接共享环境变量
             ln -sf /srv/ba8aka/shared/.env.local "$DIR/.env.local"
 
-            # 切换 current 指向新版本
+            # 切换当前版本
             ln -sfn "$DIR" /srv/ba8aka/current
             cd /srv/ba8aka/current
 
-            # 用 node 直接跑 standalone（PORT 默认 3000，如需改：export PORT=8080）
+            # standalone 启动
             pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
             pm2 start "node .next/standalone/server.js" --name ba8aka --time --node-args="--max-old-space-size=384"
             pm2 save
