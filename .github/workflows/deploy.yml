@@ -36,7 +36,24 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      # 这里把 Secrets 注入到构建环境，解决“构建阶段需要 MONGODB_URI”等变量的问题
+      - name: Check required env (debug)
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
+          OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+          OSS_REGION: ${{ secrets.OSS_REGION }}
+        run: |
+          set -e
+          for v in MONGODB_URI OSS_BUCKET OSS_ACCESS_KEY_ID OSS_ACCESS_KEY_SECRET OSS_REGION; do
+            if [ -z "${!v}" ]; then
+              echo "::error ::$v is EMPTY"
+              exit 1
+            else
+              echo "$v=***set***"
+            fi
+          done
+
       - name: Build (standalone)
         env:
           NODE_OPTIONS: "--max-old-space-size=1024"
@@ -49,6 +66,7 @@ jobs:
           OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
           OSS_REGION: ${{ secrets.OSS_REGION }}
         run: pnpm build
+
 
       - name: Pack artifacts
         run: |
