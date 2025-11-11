@@ -1,0 +1,79 @@
+name: Build & Deploy (Standalone)
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch: {}
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (standalone)
+        run: pnpm build
+
+      - name: Pack artifacts
+        run: |
+          TAR=release-${{ github.sha }}.tgz
+          tar czf $TAR \
+            .next/standalone \
+            .next/static \
+            public \
+            next.config.js
+          echo "TAR_FILE=$TAR" >> $GITHUB_ENV
+
+      - name: Upload to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: ${{ env.TAR_FILE }}
+          target: /srv/ba8aka/releases/
+
+      - name: Unpack & Restart on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            sudo mkdir -p /srv/ba8aka/releases
+            cd /srv/ba8aka/releases
+            TAR=release-${{ github.sha }}.tgz
+            DIR=${TAR%.tgz}
+            mkdir -p "$DIR"
+            tar xzf "$TAR" -C "$DIR"
+
+            # 链接共享的环境变量
+            ln -sf /srv/ba8aka/shared/.env.local "$DIR/.env.local"
+
+            # 切换 current 指向新版本
+            ln -sfn "$DIR" /srv/ba8aka/current
+            cd /srv/ba8aka/current
+
+            # 用 node 直接跑 standalone（PORT 默认 3000，如需改：export PORT=8080）
+            pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
+            pm2 start "node .next/standalone/server.js" --name ba8aka --time --node-args="--max-old-space-size=384"
+            pm2 save
