@@ -1,16 +1,4 @@
 name: Build & Deploy (Standalone)
-      - name: Build (standalone)
-        env:
-          NODE_OPTIONS: "--max-old-space-size=1024"
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
-          OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
-          OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
-          OSS_REGION: ${{ secrets.OSS_REGION }}
-        run: pnpm build
 
 on:
   push:
@@ -25,16 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 先装 Node（不使用 cache 选项，避免找 pnpm）
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           check-latest: true
 
-      # 启用 corepack + 安装 pnpm（这一步必须在 install/build 之前）
       - name: Enable corepack
         run: corepack enable
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
@@ -49,13 +36,19 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
+      # 这里把 Secrets 注入到构建环境，解决“构建阶段需要 MONGODB_URI”等变量的问题
       - name: Build (standalone)
         env:
-          # 给 Node 一点限制和稳定性（可选）
           NODE_OPTIONS: "--max-old-space-size=1024"
-        run: |
-          # 确保使用 standalone 输出
-          pnpm build
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OSS_BUCKET: ${{ secrets.OSS_BUCKET }}
+          OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+          OSS_REGION: ${{ secrets.OSS_REGION }}
+        run: pnpm build
 
       - name: Pack artifacts
         run: |
@@ -73,7 +66,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          # 如果你的 SSH 端口不是 22，再额外加一行： port: ${{ secrets.SSH_PORT }}
           source: ${{ env.TAR_FILE }}
           target: /srv/ba8aka/releases/
 
@@ -83,7 +76,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          # 如果你的 SSH 端口不是 22，再额外加一行： port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
             sudo mkdir -p /srv/ba8aka/releases
@@ -93,14 +86,14 @@ jobs:
             mkdir -p "$DIR"
             tar xzf "$TAR" -C "$DIR"
 
-            # 链接共享环境变量
+            # 链接共享环境变量（服务器上的运行期 .env）
             ln -sf /srv/ba8aka/shared/.env.local "$DIR/.env.local"
 
             # 切换当前版本
             ln -sfn "$DIR" /srv/ba8aka/current
             cd /srv/ba8aka/current
 
-            # standalone 启动
+            # 启动 standalone 产物
             pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
             pm2 start "node .next/standalone/server.js" --name ba8aka --time --node-args="--max-old-space-size=384"
             pm2 save
