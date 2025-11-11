@@ -1,3 +1,6 @@
+on:   # 暂停该工作流
+  workflow_dispatch: {}
+
 name: Deploy to Sealos
 
 env:
