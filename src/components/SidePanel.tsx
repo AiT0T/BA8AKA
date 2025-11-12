@@ -41,7 +41,6 @@ const baseNavList = [
     href: "/",
     prefix: <Home size={16} />,
   },
-  { title: "技术栈", href: "/stack", prefix: <Slack size={16} /> },
   {
     title: "灵感笔记",
     href: "/inspirations",
