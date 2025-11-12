@@ -168,10 +168,10 @@ export default function HomePageClient({ }: HomePageClientProps) {
 
         </div>
       </div>
-{/* 新增：GitHub 贡献 */}
-<Section title="开源贡献">
-  <GithubHeatmap />
-</Section>
+<div className="my-6">
+  <GithubHeatmap username="AiT0T" />
+</div>
+
       <ListSection
         title="📚 技术文章"
         titleLink="/articles"
