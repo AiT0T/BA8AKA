@@ -8,8 +8,8 @@ import AuthorIntro from "@/components/HomePage/AuthorIntro";
 import { ListSection } from "@/components/HomePage/ListSection";
 import { Section } from "@/components/HomePage/Section";
 import { SocialLinks } from "@/components/HomePage/SocialLinks";
-import { WorkExperience } from "@/components/HomePage/WorkExperience";
-import { Education } from "@/components/HomePage/Education";
+//  import { WorkExperience } from "@/components/HomePage/WorkExperience";
+//  import { Education } from "@/components/HomePage/Education";
 import { WebRunInfo } from '@/components/HomePage/WebRunInfo'
 import { WebControlInfo } from '@/components/HomePage/WebControlInfo'
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -165,15 +165,6 @@ export default function HomePageClient({ }: HomePageClientProps) {
             <WebControlInfo />
           </Section>
 
-          <Section title="教育经历">
-            <Education />
-          </Section>
-          <Section title="工作经历">
-            <WorkExperience
-              experiences={workExperiences}
-              calculateDuration={calculateDuration}
-            />
-          </Section>
         </div>
       </div>
 
