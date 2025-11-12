@@ -165,12 +165,11 @@ export default function HomePageClient({ }: HomePageClientProps) {
           <Section title="网站信息">
             <WebControlInfo />
           </Section>
-
-        </div>
-      </div>
 <div className="my-6">
   <GithubHeatmap username="AiT0T" />
 </div>
+        </div>
+      </div>
 
       <ListSection
         title="📚 技术文章"
