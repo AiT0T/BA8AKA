@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 
-// 动态加载，禁用 SSR
 const Calendar = dynamic(() => import('react-github-calendar'), { ssr: false }) as any;
 
 type Props = { username: string };
@@ -11,9 +10,8 @@ type Props = { username: string };
 export default function GithubHeatmap({ username }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [size, setSize] = useState(12); // 桌面端块尺寸
+  const [size, setSize] = useState(12); // 桌面端自适应块尺寸
 
-  // 监听是否为小屏
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)');
     const onChange = () => setIsMobile(mq.matches);
@@ -22,12 +20,11 @@ export default function GithubHeatmap({ username }: Props) {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  // 桌面端自适应宽度：根据容器宽度计算 blockSize，自动与正文对齐
+  // 桌面端根据容器宽度自适应块尺寸（与正文对齐）
   useEffect(() => {
     if (!wrapRef.current || isMobile) return;
     const calc = () => {
       const w = wrapRef.current!.clientWidth;
-      // 目标：53 周列，预留左右 40px，块间距约 2px，限制范围 10~14
       const s = Math.max(10, Math.min(14, Math.floor((w - 40) / 53 - 2)));
       setSize(s);
     };
@@ -36,19 +33,30 @@ export default function GithubHeatmap({ username }: Props) {
     return () => window.removeEventListener('resize', calc);
   }, [isMobile]);
 
-  const blockSize = isMobile ? 16 : size;       // 手机端方块更大
-  const blockMargin = isMobile ? 4 : 3;
+  // ✅ 手机端适中一点，且只让日历自己滚动
+  const MOBILE_SIZE = 12;      // 原来 16 太高了
+  const MOBILE_MARGIN = 3;
 
-  // 计算一个最小宽度，手机端允许横向滚动，不压缩方块
-  const minWidth = 53 * (blockSize + blockMargin) + 40; // 53 周 + 两侧留白
+  const blockSize = isMobile ? MOBILE_SIZE : size;
+  const blockMargin = isMobile ? MOBILE_MARGIN : 3;
+
+  // 只给内部容器设宽度；外层用 overflow-x-auto 截断，防止 body 出现横向滚动条
+  const contentWidth = 53 * (blockSize + blockMargin) + 40; // 53 周 + 左右留白
 
   return (
     <div
       ref={wrapRef}
-      className="w-full rounded-2xl border border-zinc-200/60 p-4 dark:border-zinc-800/60
-                 sm:overflow-x-auto"  // 小屏可横向滚动
+      className="
+        w-full rounded-2xl border border-zinc-200/60 p-4 dark:border-zinc-800/60
+        overflow-x-auto md:overflow-visible           /* ⬅️ 小屏允许横向滚动，桌面正常 */
+        overscroll-x-contain touch-pan-x              /* ⬅️ 只捕获日历的横向滑动 */
+      "
+      style={{ maxWidth: '100%' }}                     /* ⬅️ 防止外层撑出页面 */
     >
-      <div style={{ minWidth: isMobile ? `${minWidth}px` : undefined }}>
+      <div
+        className="inline-block"
+        style={{ width: isMobile ? `${contentWidth}px` : '100%' }}
+      >
         <Calendar
           username={username}
           blockSize={blockSize}
