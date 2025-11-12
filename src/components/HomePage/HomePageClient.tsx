@@ -1,6 +1,7 @@
 'use client'
 
 import { ISocialLink } from "@/app/model/social-link";
+import GithubHeatmap from './GithubHeatmap';
 import { IWorkExperience } from "@/app/model/work-experience";
 import { Article, ArticleStatus } from "@/app/model/article";
 import HomeHeader from "@/components/HomePage/HomeHeader";
