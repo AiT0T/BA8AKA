@@ -1,52 +1,67 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
-import ErrorBoundary from '../common/ErrorBoundary';
+import { useEffect, useRef, useState } from 'react';
 
-// 关键：拿 default，并放宽 TS（避免属性类型报错）
-const Calendar = dynamic<any>(
-  () => import('react-github-calendar').then(m => m.default),
-  { ssr: false }
-);
+// 动态加载，禁用 SSR
+const Calendar = dynamic(() => import('react-github-calendar'), { ssr: false }) as any;
 
-export default function GithubHeatmap({ username }: { username: string }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
+type Props = { username: string };
 
-  // 兜底：静态图片版热力图（不会报错、体积小）
-  const fallback = (
-    <a href={`https://github.com/${username}`} target="_blank" rel="noreferrer" className="block">
-      <img
-        src={`https://ghchart.rshah.org/219653/${username}`}
-        alt={`${username} GitHub contributions`}
-        className="w-full rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60"
-        loading="lazy"
-      />
-    </a>
-  );
+export default function GithubHeatmap({ username }: Props) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [size, setSize] = useState(12); // 桌面端块尺寸
 
-  if (!ready) return fallback;
+  // 监听是否为小屏
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const onChange = () => setIsMobile(mq.matches);
+    onChange();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // 桌面端自适应宽度：根据容器宽度计算 blockSize，自动与正文对齐
+  useEffect(() => {
+    if (!wrapRef.current || isMobile) return;
+    const calc = () => {
+      const w = wrapRef.current!.clientWidth;
+      // 目标：53 周列，预留左右 40px，块间距约 2px，限制范围 10~14
+      const s = Math.max(10, Math.min(14, Math.floor((w - 40) / 53 - 2)));
+      setSize(s);
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, [isMobile]);
+
+  const blockSize = isMobile ? 16 : size;       // 手机端方块更大
+  const blockMargin = isMobile ? 4 : 3;
+
+  // 计算一个最小宽度，手机端允许横向滚动，不压缩方块
+  const minWidth = 53 * (blockSize + blockMargin) + 40; // 53 周 + 两侧留白
 
   return (
-    <ErrorBoundary fallback={fallback}>
-      <div className="w-full overflow-x-auto rounded-2xl border border-zinc-200/60 p-4 dark:border-zinc-800/60">
+    <div
+      ref={wrapRef}
+      className="w-full rounded-2xl border border-zinc-200/60 p-4 dark:border-zinc-800/60
+                 sm:overflow-x-auto"  // 小屏可横向滚动
+    >
+      <div style={{ minWidth: isMobile ? `${minWidth}px` : undefined }}>
         <Calendar
           username={username}
-          blockSize={12}
-          blockMargin={4}
+          blockSize={blockSize}
+          blockMargin={blockMargin}
           weekStart={1}
           hideTotalCount
           hideColorLegend
           theme={{
-            level0: '#161B22',
-            level1: '#0e4429',
-            level2: '#006d32',
-            level3: '#26a641',
-            level4: '#39d353',
+            light: ['#ebedf0', '#c6e48b', '#7bc96f', '#239a3b', '#196127'],
+            dark:  ['#111827', '#0e4429', '#006d32', '#26a641', '#39d353'],
           }}
         />
       </div>
-    </ErrorBoundary>
+    </div>
   );
 }
