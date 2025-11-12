@@ -15,7 +15,7 @@ const StatIndicator = memo(({
 }: {
     icon: React.ReactNode;
     label: string;
-    value: string | number;
+    value: React.ReactNode;
     bgColor: string;
     iconColor: string;
     onClick?: () => void;
