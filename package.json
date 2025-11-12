@@ -135,7 +135,8 @@
     "unified": "^11.0.5",
     "uuid": "^11.0.3",
     "yet-another-react-lightbox": "^3.21.7",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "react-github-calendar": "^4.4.0"
   },
   "devDependencies": {
     "@types/chroma-js": "^3.1.1",
