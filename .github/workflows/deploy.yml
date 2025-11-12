@@ -124,7 +124,7 @@ jobs:
               pm2 save
             else
               command -v pnpm >/dev/null 2>&1 || sudo npm i -g pnpm
-              pnpm install --prod --frozen-lockfile || pnpm install --prod
+              pnpm install --prod --no-frozen-lockfile || pnpm install --prod
               pm2 describe ba8aka >/dev/null 2>&1 && pm2 delete ba8aka || true
               pm2 start "pnpm start" --name ba8aka --time --node-args="--max-old-space-size=384"
               pm2 save
