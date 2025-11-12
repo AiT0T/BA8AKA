@@ -75,9 +75,20 @@ export const WebControlInfo = () => {
       <StatIndicator
         icon={<BadgeCheck />}
         label="备案"
-        value={site?.icp || ""}
-        bgColor="bg-blue-500/20"
-        iconColor="text-blue-500"
+        value={
+    site?.icp ? (
+      <a
+        href="https://beian.miit.gov.cn/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="no-underline hover:no-underline active:font-semibold active:text-blue-600 focus:text-blue-600 hover:text-blue-600 transition-colors"
+      >
+        {site.icp}
+      </a>
+    ) : "—"
+  }
+  bgColor="bg-blue-500/20"
+  iconColor="text-blue-500"
       />
     </div>
   );
