@@ -172,7 +172,7 @@ const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => {
             {site?.author?.name ?? "BA8AKA"}
           </h1>
           <p className="text-gray-600">
-            {site?.author?.bio ?? "👨🏻‍💻纯种牛马"}
+            {site?.author?.bio ?? "👨🏻‍💻牛马打工人"}
           </p>
         </div>
       </div>
