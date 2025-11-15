@@ -10,7 +10,7 @@ const navItems = [
   { name: "书签管理", href: "/admin/bookmarks" },
   { name: "友链管理", href: "/admin/friends" },
   { name: "相册管理", href: "/admin/photos" },
-  { name: "健身管理", href: "/admin/fitness" },
+  { name: "健康管理", href: "/admin/fitness" },
   { name: "旅行管理", href: "/admin/travel" },
   { name: "图像影调分析", href: "/admin/image-analysis" },
   { name: "时间线管理", href: "/admin/timelines" },
