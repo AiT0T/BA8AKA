@@ -81,10 +81,10 @@ export default function Fitness() {
             <div className="h-full overflow-y-auto custom-scrollbar-thin px-4 sm:px-4 py-8 sm:py-16">
                 <div className="w-full max-w-4xl mx-auto">
                     <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
-                        健身打卡
+                        健康记录
                     </h1>
                     <div className="mb-4 sm:mb-6 last:mb-0 text-sm sm:text-base text-gray-600">
-                        记录健身的每一天，见证成长的足迹
+                        记录身体健康的每一天，见证成长的足迹
                     </div>
                     {months.map((month) => {
                         const [year, monthNum] = month.split('-');
@@ -115,8 +115,8 @@ export default function Fitness() {
                     {fitnessRecords.length === 0 && (
                         <div className="text-center text-gray-500 mt-16">
                             <div className="text-6xl mb-4">💪</div>
-                            <div className="text-lg mb-2">还没有健身记录</div>
-                            <div className="text-sm">开始你的健身之旅吧！</div>
+                            <div className="text-lg mb-2">还没有健康记录</div>
+                            <div className="text-sm">开始你的身体健康之旅吧！</div>
                         </div>
                     )}
                 </div>
