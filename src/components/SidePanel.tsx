@@ -48,7 +48,7 @@ const baseNavList = [
   },
   { title: "技术文章", href: "/articles", prefix: <BookOpen size={16} /> },
   { title: "生活相册", href: "/album", prefix: <Camera size={16} /> },
-  { title: "健身打卡", href: "/fitness", prefix: <Dumbbell size={16} /> },
+  { title: "健康记录", href: "/fitness", prefix: <Dumbbell size={16} /> },
   { title: "旅行记录", href: "/travel", prefix: <Plane size={16} /> },
   { title: "工作空间", href: "/workspace", prefix: <Laptop size={16} /> },
   { title: "导航站", href: "/bookmarks", prefix: <FolderHeart size={16} /> },
@@ -165,14 +165,14 @@ const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => {
             src={site?.author?.avatar || "./avatar.png"}
             alt="vespser"
           />
-          <AvatarFallback>ObjectX</AvatarFallback>
+          <AvatarFallback>BA8AKA</AvatarFallback>
         </Avatar>
         <div>
           <h1 className="font-semibold tracking-tight">
-            {site?.author?.name ?? "ObjectX-不知名程序员"}
+            {site?.author?.name ?? "BA8AKA"}
           </h1>
           <p className="text-gray-600">
-            {site?.author?.bio ?? "👨🏻‍💻 前端工程师"}
+            {site?.author?.bio ?? "👨🏻‍💻纯种牛马"}
           </p>
         </div>
       </div>
