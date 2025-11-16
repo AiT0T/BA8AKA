@@ -1,40 +1,127 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 interface BilibiliVideoProps {
   bvid: string;
   page?: number;
   title?: string;
   isMobile?: boolean;
+  cover?: string;         // 可选：封面图，未播放时展示
 }
 
-/**
- * B站视频播放器组件，同时适配移动端和桌面端
- */
+/** 全局只允许一个播放器在播的小总线 */
+const BUS_EVENT = 'bili:nowplaying';
+function notifyNowPlaying(id: string) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(BUS_EVENT, { detail: id }));
+  }
+}
+function useStopWhenOthersPlay(id: string, stop: () => void) {
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail !== id) stop();
+    };
+    window.addEventListener(BUS_EVENT, handler);
+    return () => window.removeEventListener(BUS_EVENT, handler);
+  }, [id, stop]);
+}
+
+/** B 站视频播放器：离开视口自动停止 + 只允许一个在播 */
 export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
   bvid,
   page = 1,
   title,
-  isMobile = false
+  isMobile = false,
+  cover,
 }) => {
+  const id = useId();
+  const [playing, setPlaying] = useState(false);
+
+  // 视口检测：离开视口就停止（卸载 iframe）
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) setPlaying(false);
+      },
+      { threshold: 0.25 } // 可按需调整
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // 别的播放器开始时，停止自己
+  useStopWhenOthersPlay(id, () => setPlaying(false));
+
+  // 仅在“播放”时挂载 iframe；停止时卸载（等同于暂停）
+  const src = useMemo(
+    () =>
+      `https://player.bilibili.com/player.html?bvid=${encodeURIComponent(
+        bvid
+      )}&page=${page}&autoplay=1&danmaku=0&high_quality=1`,
+    [bvid, page]
+  );
+
   return (
-    <div className="w-full max-w-full sm:max-w-5xl mx-auto mb-4">
-      <div className={`relative w-full aspect-video ${isMobile ? '' : 'min-h-[240px] sm:min-h-[480px]'}`}>
-        <iframe
-          src={`//player.bilibili.com/player.html?bvid=${bvid}&page=${page}&autoplay=0&quality=80`}
-          scrolling="no"
-          style={{ border: "none" }}
-          frameBorder="no"
-          allowFullScreen={true}
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-          referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full rounded-lg shadow-lg"
-        />
+    <div
+      ref={containerRef}
+      className="w-full max-w-full sm:max-w-5xl mx-auto mb-4"
+    >
+      <div
+        className={`relative w-full aspect-video ${
+          isMobile ? '' : 'min-h-[240px] sm:min-h-[480px]'
+        }`}
+      >
+        {playing ? (
+          <iframe
+            key={src} // 切换播放状态时强制重建，确保停止
+            src={src}
+            title={title || bvid}
+            scrolling="no"
+            style={{ border: 'none' }}
+            frameBorder="0"
+            loading="lazy"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+            // 允许脚本/同源/用户激活的顶层导航/展示
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation allow-top-navigation-by-user-activation"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 w-full h-full rounded-lg shadow-lg"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              notifyNowPlaying(id);
+              setPlaying(true);
+            }}
+            className="absolute inset-0 w-full h-full rounded-lg shadow-lg overflow-hidden bg-zinc-100 dark:bg-zinc-900 grid place-items-center"
+            aria-label={`播放 ${title || bvid}`}
+          >
+            {cover && (
+              <img
+                src={cover}
+                alt={title || bvid}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+            )}
+            <div className="relative z-10 flex items-center justify-center">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-black/60 text-white flex items-center justify-center text-2xl">
+                ▶
+              </div>
+            </div>
+          </button>
+        )}
       </div>
+
       <div className="flex items-center space-x-2 mt-2 text-xs sm:text-sm text-gray-500 px-2 sm:px-0">
         <svg
           className="w-4 h-4 sm:w-5 sm:h-5"
           viewBox="0 0 1024 1024"
-          version="1.1"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -43,11 +130,7 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
           />
         </svg>
         <span>BV号: {bvid}</span>
-        {title && (
-          <span className="truncate">
-            标题: {title}
-          </span>
-        )}
+        {title && <span className="truncate">标题: {title}</span>}
       </div>
     </div>
   );
