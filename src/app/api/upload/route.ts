@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import OSS from "ali-oss";
 import { v4 as uuidv4 } from "uuid";
+import { Readable } from "stream";
+
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 大文件上传给足执行时间
 
 // Check if all required environment variables are set
 const requiredEnvVars = {
@@ -109,14 +113,10 @@ export async function POST(request: Request) {
     }
     const filename = `${basePath}/${directory}/${uuidv4()}.${extension}`;
 
-    // 读取文件内容
-    const buffer = Buffer.from(await file.arrayBuffer());
+  const stream = Readable.fromWeb(file.stream() as any);
+  const result = await client.putStream(filename, stream);
 
-    // 上传文件到OSS
-    const result = await uploadWithRetry(client, filename, buffer);
-
-    // 构建完整的URL
-    const url = `https://${requiredEnvVars.bucket}.${requiredEnvVars.region}.aliyuncs.com/${filename}`;
+  const url = `https://${process.env.OSS_BUCKET}.${process.env.OSS_REGION}.aliyuncs.com/${filename}`;
 
     return NextResponse.json({ url });
   } catch (error: any) {
