@@ -7,16 +7,18 @@ interface BilibiliVideoProps {
   page?: number;
   title?: string;
   isMobile?: boolean;
-  cover?: string;         // 可选：封面图，未播放时展示（优先级高于自动封面）
+  cover?: string; // 可选：手动传封面，优先级最高
 }
 
 /** 全局只允许一个播放器在播的小总线 */
 const BUS_EVENT = 'bili:nowplaying';
+
 function notifyNowPlaying(id: string) {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(BUS_EVENT, { detail: id }));
   }
 }
+
 function useStopWhenOthersPlay(id: string, stop: () => void) {
   useEffect(() => {
     const handler = (e: Event) => {
@@ -40,7 +42,7 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
   const [playing, setPlaying] = useState(false);
   const [autoCover, setAutoCover] = useState<string | undefined>();
 
-  // 如果没有传入 cover，则尝试从 B 站接口自动获取封面
+  // 如果外部没传 cover，则走后端 API 自动获取 B 站封面
   useEffect(() => {
     if (cover || !bvid) return;
 
@@ -49,19 +51,14 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
     (async () => {
       try {
         const res = await fetch(
-          `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(
-            bvid
-          )}`
+          `/api/bilibili/cover?bvid=${encodeURIComponent(bvid)}`
         );
         if (!res.ok) return;
-
-        const json = await res.json();
-        const pic: string | undefined = json?.data?.pic;
-        if (!cancelled && pic) {
-          setAutoCover(pic);
+        const data = await res.json();
+        if (!cancelled && data?.pic) {
+          setAutoCover(data.pic as string);
         }
       } catch (err) {
-        // 失败就保持灰底，不影响正常播放
         if (process.env.NODE_ENV !== 'production') {
           console.warn('获取 B 站封面失败', err);
         }
@@ -77,13 +74,15 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) setPlaying(false);
       },
-      { threshold: 0.25 } // 可按需调整
+      { threshold: 0.25 }
     );
+
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -100,6 +99,7 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
     [bvid, page]
   );
 
+  // 最终使用的封面：优先外部传入，其次自动获取
   const effectiveCover = cover ?? autoCover;
 
   return (
