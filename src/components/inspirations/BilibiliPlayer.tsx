@@ -88,7 +88,6 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
             allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
             // 允许脚本/同源/用户激活的顶层导航/展示
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation allow-top-navigation-by-user-activation"
-            referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full rounded-lg shadow-lg"
           />
         ) : (
