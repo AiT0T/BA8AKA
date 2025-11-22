@@ -40,35 +40,6 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
 }) => {
   const id = useId();
   const [playing, setPlaying] = useState(false);
-  const [autoCover, setAutoCover] = useState<string | undefined>();
-
-  // 如果外部没传 cover，则走后端 API 自动获取 B 站封面
-  useEffect(() => {
-    if (cover || !bvid) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res = await fetch(
-          `/api/bilibili/cover?bvid=${encodeURIComponent(bvid)}`
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled && data?.pic) {
-          setAutoCover(data.pic as string);
-        }
-      } catch (err) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('获取 B 站封面失败', err);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [bvid, cover]);
 
   // 视口检测：离开视口就停止（卸载 iframe）
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -99,8 +70,11 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
     [bvid, page]
   );
 
-  // 最终使用的封面：优先外部传入，其次自动获取
-  const effectiveCover = cover ?? autoCover;
+  // 最终使用的封面：
+  // 1）如果调用方主动传了 cover，则用调用方的；
+  // 2）否则使用自己 API 的代理封面。
+  const effectiveCover =
+    cover ?? `/api/bilibili/cover?bvid=${encodeURIComponent(bvid)}`;
 
   return (
     <div
