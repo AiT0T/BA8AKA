@@ -70,7 +70,7 @@ export function TimelineEvent({ event }: { event: ITimelineEvent }) {
       <div className="flex-1 flex flex-col justify-center min-w-0">
         {/* 标题和标签行 */}
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <h2 className="text-xl sm:text-2xl font-medium text-gray-900">
+          <h2 className="text-lg sm:text-xl font-medium text-gray-900">
             {event.title}
           </h2>
 
@@ -97,7 +97,7 @@ export function TimelineEvent({ event }: { event: ITimelineEvent }) {
           </div>
         </div>
 
-        <p className="text-gray-600 text-base sm:text-lg mb-3 leading-relaxed">
+        <p className="text-gray-600 text-sm sm:text-base mb-3 leading-relaxed">
           {event.description}
         </p>
 
