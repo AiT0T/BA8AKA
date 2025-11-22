@@ -7,7 +7,7 @@ interface BilibiliVideoProps {
   page?: number;
   title?: string;
   isMobile?: boolean;
-  cover?: string;         // 可选：封面图，未播放时展示
+  cover?: string;         // 可选：封面图，未播放时展示（优先级高于自动封面）
 }
 
 /** 全局只允许一个播放器在播的小总线 */
@@ -38,6 +38,40 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
 }) => {
   const id = useId();
   const [playing, setPlaying] = useState(false);
+  const [autoCover, setAutoCover] = useState<string | undefined>();
+
+  // 如果没有传入 cover，则尝试从 B 站接口自动获取封面
+  useEffect(() => {
+    if (cover || !bvid) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(
+            bvid
+          )}`
+        );
+        if (!res.ok) return;
+
+        const json = await res.json();
+        const pic: string | undefined = json?.data?.pic;
+        if (!cancelled && pic) {
+          setAutoCover(pic);
+        }
+      } catch (err) {
+        // 失败就保持灰底，不影响正常播放
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('获取 B 站封面失败', err);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bvid, cover]);
 
   // 视口检测：离开视口就停止（卸载 iframe）
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -65,6 +99,8 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
       )}&page=${page}&autoplay=1&danmaku=0&high_quality=1`,
     [bvid, page]
   );
+
+  const effectiveCover = cover ?? autoCover;
 
   return (
     <div
@@ -100,9 +136,9 @@ export const BilibiliPlayer: React.FC<BilibiliVideoProps> = ({
             className="absolute inset-0 w-full h-full rounded-lg shadow-lg overflow-hidden bg-zinc-100 dark:bg-zinc-900 grid place-items-center"
             aria-label={`播放 ${title || bvid}`}
           >
-            {cover && (
+            {effectiveCover && (
               <img
-                src={cover}
+                src={effectiveCover}
                 alt={title || bvid}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading="lazy"
