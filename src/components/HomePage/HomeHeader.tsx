@@ -9,7 +9,7 @@ export default function HomeHeader() {
   return (
     <div className="relative w-full">
       {/* Background Image */}
-      <div className="w-[80%] h-[25vh] rounded-xl overflow-hidden relative mx-auto">
+      <div className="w-full md:w-[80%] h-[25vh] rounded-xl overflow-hidden relative mx-auto">
         <Image
           src={site?.backgroundImage || '/images/background.jpg'}
           alt="Background"
