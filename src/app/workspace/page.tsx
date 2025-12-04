@@ -9,11 +9,11 @@ import { workspaceBusiness } from "@/app/business/workspace";
 import { useSiteStore } from "@/store/site";
 import { ISite } from "../model/site";
 
-// ⭐ 新增：默认图片列表，集中配置
-const DEFAULT_WORKSPACE_IMAGES = [
+// 默认本地图片列表：现在只有一张，后面你可以随时往里面加
+const DEFAULT_WORKSPACE_IMAGES: string[] = [
   "/myworkspace.jpg",
-  // 将来如果再加图，只要在 public 放文件，然后在这里加路径
   "/myworkspace-2.jpg",
+  // 例如将来你再加图，只要：把文件放到 public，然后在这里追加路径即可
   // "/myworkspace-3.jpg",
 ];
 
@@ -23,7 +23,7 @@ export default function Workspace() {
   const [isLoading, setIsLoading] = useState(true);
   const { site } = useSiteStore();
 
-  // 获取站点信息，决定用后台图还是本地图
+  // 根据站点配置 / 默认值，决定要展示的顶部图片数组
   useEffect(() => {
     const updateBackgroundImages = (site: ISite | undefined) => {
       const images: string[] = [];
@@ -31,7 +31,7 @@ export default function Workspace() {
       if (site?.workspaceBgUrl1) images.push(site.workspaceBgUrl1);
       if (site?.workspaceBgUrl2) images.push(site.workspaceBgUrl2);
 
-      // 如果后台没有配置，就用本地默认图列表
+      // 如果后台没配，就用本地默认图片列表
       if (images.length === 0) {
         setBgImages(DEFAULT_WORKSPACE_IMAGES);
       } else {
@@ -42,13 +42,15 @@ export default function Workspace() {
     updateBackgroundImages(site);
   }, [site]);
 
-  // ……下面这段获取 workspaceItems 的 useEffect 保持原样
+  // 拉取「工作空间」表格数据
   useEffect(() => {
     const fetchWorkspaceItems = async () => {
       setIsLoading(true);
+
       try {
         const items = await workspaceBusiness.getWorkspaceItems();
         const workspaceItemsArray = Array.isArray(items) ? items : [];
+
         const itemsForTable: ItemType[] = workspaceItemsArray.map((item) => ({
           id: item._id || "",
           product: item.product,
@@ -56,6 +58,7 @@ export default function Workspace() {
           buyAddress: item.buyAddress,
           buyLink: item.buyLink,
         }));
+
         setWorkspaceItems(itemsForTable);
       } catch (error) {
         console.error("Error fetching workspace items:", error);
@@ -66,8 +69,8 @@ export default function Workspace() {
 
     fetchWorkspaceItems();
   }, []);
-}
 
+  // 表格列配置
   const fields = [
     { key: "product", label: "产品" },
     { key: "specs", label: "规格" },
@@ -85,6 +88,7 @@ export default function Workspace() {
     },
   ];
 
+  // 加载骨架屏
   if (isLoading) {
     return (
       <main className="flex h-screen w-full box-border flex-col overflow-y-auto py-8 px-8">
@@ -93,12 +97,13 @@ export default function Workspace() {
     );
   }
 
+  // 正常页面渲染
   return (
     <main className="flex h-screen w-full box-border flex-col overflow-y-auto py-8 px-8">
       <h1 className="text-3xl font-bold mb-6">工作空间</h1>
       <div className="mb-6 last:mb-0">工作空间，记录了工作用到的产品和工具</div>
 
-      {/* 顶部图片，只渲染 bgImages 里的一张 */}
+      {/* 顶部图片：根据 bgImages 自动渲染 1 张 / 2 张 / N 张 */}
       <div className="mx-6 mb-4 flex snap-x snap-mandatory gap-6 overflow-x-scroll pb-4 md:mx-0 md:grid md:snap-none md:grid-cols-2 md:overflow-x-auto md:pb-0">
         {bgImages.map((imgSrc, index) => (
           <div key={index} className="relative w-2/3 md:w-full h-96 md:h-72">
