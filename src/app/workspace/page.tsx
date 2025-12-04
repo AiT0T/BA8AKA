@@ -103,21 +103,35 @@ export default function Workspace() {
       <h1 className="text-3xl font-bold mb-6">工作空间</h1>
       <div className="mb-6 last:mb-0">工作空间，记录了工作用到的产品和工具</div>
 
-      {/* 顶部图片：根据 bgImages 自动渲染 1 张 / 2 张 / N 张 */}
-      <div className="mx-6 mb-4 flex snap-x snap-mandatory gap-6 overflow-x-scroll pb-4 md:mx-0 md:grid md:snap-none md:grid-cols-2 md:overflow-x-auto md:pb-0">
-        {bgImages.map((imgSrc, index) => (
-          <div key={index} className="relative w-2/3 md:w-full h-96 md:h-72">
-            <Image
-              className="snap-center object-cover rounded-md shadow-md"
-              src={imgSrc}
-              alt={`工作空间背景图 ${index + 1}`}
-              fill
-              sizes="(max-width: 768px) 66vw, 50vw"
-              priority
-            />
-          </div>
-        ))}
+      {/* 背景图片区域 */}
+<div className="mx-6 mb-4 md:mx-0">
+  <div
+    className="
+      flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4
+      md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:snap-none md:pb-0
+    "
+  >
+    {bgImages.map((imgSrc, index) => (
+      <div
+        key={index}
+        className="
+          relative min-w-[85%] snap-center aspect-[16/9]
+          md:min-w-0 md:w-full
+        "
+      >
+        <Image
+          className="object-cover rounded-md shadow-md"
+          src={imgSrc}
+          alt={`工作空间背景图 ${index + 1}`}
+          fill
+          sizes="(max-width: 768px) 85vw, 50vw"
+          priority
+        />
       </div>
+    ))}
+  </div>
+</div>
+
 
       <div className="border border-gray-200 rounded-xl mt-4">
         <Table
