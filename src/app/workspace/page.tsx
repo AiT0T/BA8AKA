@@ -103,8 +103,8 @@ export default function Workspace() {
       <h1 className="text-3xl font-bold mb-6">工作空间</h1>
       <div className="mb-6 last:mb-0">工作空间，记录了工作用到的产品和工具</div>
 
-      {/* 背景图片区域 */}
-<div className="mx-6 mb-4 md:mx-0">
+     {/* 背景图片区域 */}
+<div className="mb-4 md:mx-0">
   <div
     className="
       flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4
@@ -115,7 +115,7 @@ export default function Workspace() {
       <div
         key={index}
         className="
-          relative min-w-[85%] snap-center aspect-[16/9]
+          relative min-w-full snap-start aspect-[16/9]
           md:min-w-0 md:w-full
         "
       >
@@ -124,14 +124,13 @@ export default function Workspace() {
           src={imgSrc}
           alt={`工作空间背景图 ${index + 1}`}
           fill
-          sizes="(max-width: 768px) 85vw, 50vw"
+          sizes="(max-width: 768px) 100vw, 50vw"
           priority
         />
       </div>
     ))}
   </div>
 </div>
-
 
       <div className="border border-gray-200 rounded-xl mt-4">
         <Table
