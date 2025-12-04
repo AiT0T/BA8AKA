@@ -47,7 +47,7 @@ export const DesktopView = (props: DesktopViewProps) => {
         <div className="sticky top-0 h-screen overflow-y-auto custom-scrollbar-thin">
           <nav className="p-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">技术文档</h2>
+              <h2 className="text-lg font-bold">我的文章</h2>
               <Link
                 href="/api/rss?type=articles"
                 target="_blank"
