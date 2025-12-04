@@ -462,7 +462,7 @@ export default function ArticleDetailPage() {
         {/* 文章内容 */}
         <div className="flex-1 overflow-y-auto custom-scrollbar-thin pt-24 pb-20">
           <div className="p-4">
-            <div className="prose max-w-none">{renderArticleContent()}</div>
+            <div className="article-typography">{renderArticleContent()}</div>
           </div>
         </div>
       </div>
