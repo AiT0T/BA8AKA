@@ -25,7 +25,7 @@ export default function Workspace() {
 
   // 根据站点配置 / 默认值，决定要展示的顶部图片数组
   useEffect(() => {
-    const updateBackgroundImages = (site: ISite | undefined) => {
+    const updateBackgroundImages = (site: ISite | null) => {
       const images: string[] = [];
 
       if (site?.workspaceBgUrl1) images.push(site.workspaceBgUrl1);
