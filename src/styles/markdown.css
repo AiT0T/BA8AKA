@@ -3,19 +3,13 @@
  * ============================ */
 @font-face {
   font-family: "BA8AKA-Serif";
-  src: url("/fonts/SourceHanSerifCN-Regular.otf") format("opentype");
-  font-weight: 400;
+  src: url("/fonts/SourceHanSerifSC-VF.otf.woff2") format("woff2");
+  /* 这个范围告诉浏览器：这个字体从多细到多粗都支持 */
+  font-weight: 200 900;
   font-style: normal;
   font-display: swap;
 }
 
-@font-face {
-  font-family: "BA8AKA-Serif";
-  src: url("/fonts/SourceHanSerifCN-SemiBold.otf") format("opentype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
 
 /* Markdown 全局样式：改成偏“书面感”的宋体/衬线字体 */
 .markdown-content {
