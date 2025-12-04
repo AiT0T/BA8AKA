@@ -588,7 +588,10 @@ export default function ArticleDetailPage() {
               </button>
             )}
             <h1 className="text-4xl font-bold mb-8">{article.title}</h1>
-            {renderArticleContent()}
+            {/* 统一文章排版容器 */}
+            <div className="article-typography">
+              {renderArticleContent()}
+            </div>
           </div>
         </div>
       </div>
