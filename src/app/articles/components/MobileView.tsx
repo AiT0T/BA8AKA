@@ -155,24 +155,28 @@ export const MobileView = (props: MobileViewProps) => {
       >
         <div className="flex flex-col h-full">
           <button
-            onClick={handleBack}
-            className="absolute top-4 left-4 z-50 p-3 bg-white rounded-xl shadow-lg border border-gray-200 touch-manipulation hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          >
-            <svg
-              className="w-5 h-5 text-gray-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+  onClick={handleBack}
+  className="absolute top-4 left-4 z-50 inline-flex items-center justify-center
+             p-2 rounded-full touch-manipulation
+             hover:bg-black/5 active:bg-black/10 transition-colors"
+  style={{ WebkitTapHighlightColor: 'transparent' }}
+  aria-label="返回"
+>
+  <svg
+    className="w-5 h-5 text-gray-800"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15 19l-7-7 7-7"
+    />
+  </svg>
+</button>
+
 
           <div className="p-4 pt-16 border-b bg-white">
             <div className="flex justify-between items-center">
