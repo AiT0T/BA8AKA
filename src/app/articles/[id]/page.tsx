@@ -369,44 +369,23 @@ export default function ArticleDetailPage() {
     if (!article) return null;
     return (
       <div className="fixed inset-0 flex flex-col">
-        {/* 返回按钮 */}
-        <button
-          onClick={() => window.history.back()}
-          className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-
-        {/* 固定在顶部的标题和目录 */}
-        <div
-          className={`fixed top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ${isHeaderVisible ? "translate-y-0" : "-translate-y-full"
-            }`}
-        >
-          <div className="p-4 border-b">
-            <h1 className="text-xl font-bold mb-4 text-center truncate px-12">
-              {article.title}
-            </h1>
-
-            {/* 目录切换按钮 */}
+              {/* 固定在顶部的标题和目录 */}
+      <div
+        className={`fixed top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ${
+          isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
+        <div className="p-4 border-b">
+          {/* 顶部：返回箭头 + 标题，同一行对齐 */}
+          <div className="flex items-center">
             <button
-              onClick={() => setShowToc(!showToc)}
-              className="flex items-center text-gray-600 hover:text-black mb-2"
+              onClick={() => window.history.back()}
+              className="inline-flex items-center justify-center p-2 rounded-full touch-manipulation hover:bg-black/5 active:bg-black/10 transition-colors"
+              style={{ WebkitTapHighlightColor: "transparent" }}
+              aria-label="返回"
             >
               <svg
-                className={`w-4 h-4 mr-2 transition-transform ${showToc ? "rotate-0" : "-rotate-90"
-                  }`}
+                className="w-5 h-5 text-gray-800"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -415,11 +394,41 @@ export default function ArticleDetailPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
+                  d="M15 19l-7-7 7-7"
                 />
               </svg>
-              目录
             </button>
+
+            <h1 className="flex-1 text-xl font-bold text-center truncate px-4">
+              {article.title}
+            </h1>
+
+            {/* 右侧占位，保证标题真正居中 */}
+            <div className="w-9" />
+          </div>
+
+          {/* 目录切换按钮 */}
+          <button
+            onClick={() => setShowToc(!showToc)}
+            className="mt-3 flex items-center text-gray-600 hover:text-black"
+          >
+            <svg
+              className={`w-4 h-4 mr-2 transition-transform ${
+                showToc ? "rotate-0" : "-rotate-90"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+            目录
+          </button>
 
             {/* 文章目录 */}
             <div
