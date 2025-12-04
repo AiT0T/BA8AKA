@@ -12,6 +12,7 @@ import { ISite } from "../model/site";
 export default function Workspace() {
   const [workspaceItems, setWorkspaceItems] = useState<ItemType[]>([]);
   const [bgImages, setBgImages] = useState<string[]>([]);
+  const bgImages = ["/myworkspace.jpg"];
   const [isLoading, setIsLoading] = useState(true);
   const { site } = useSiteStore();
 
