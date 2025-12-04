@@ -46,7 +46,7 @@ const baseNavList = [
     href: "/inspirations",
     prefix: <Lightbulb size={16} />,
   },
-  { title: "技术文章", href: "/articles", prefix: <BookOpen size={16} /> },
+  { title: "我的文章", href: "/articles", prefix: <BookOpen size={16} /> },
   { title: "生活相册", href: "/album", prefix: <Camera size={16} /> },
   { title: "健康记录", href: "/fitness", prefix: <Dumbbell size={16} /> },
   { title: "旅行记录", href: "/travel", prefix: <Plane size={16} /> },
