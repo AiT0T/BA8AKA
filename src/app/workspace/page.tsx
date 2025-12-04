@@ -12,7 +12,6 @@ import { ISite } from "../model/site";
 export default function Workspace() {
   const [workspaceItems, setWorkspaceItems] = useState<ItemType[]>([]);
   const [bgImages, setBgImages] = useState<string[]>([]);
-  const bgImages = ["/myworkspace.jpg"];
   const [isLoading, setIsLoading] = useState(true);
   const { site } = useSiteStore();
 
@@ -26,6 +25,7 @@ export default function Workspace() {
       // 如果没有设置背景图，使用默认图片
       if (images.length === 0) {
         images.push("/example1.jpg", "/example2.jpg");
+        images.push("/myworkspace.jpg");
       }
 
       setBgImages(images);
