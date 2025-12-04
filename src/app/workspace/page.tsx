@@ -134,7 +134,7 @@ export default function Workspace() {
 
       <div className="border border-gray-200 rounded-xl mt-4">
         <Table
-          caption="For other cool stuff, don't forget to check some.wtf"
+          caption="更多好物即将更新，敬请期待~"
           items={workspaceItems}
           fields={fields}
         />
