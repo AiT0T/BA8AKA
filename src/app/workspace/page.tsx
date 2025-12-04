@@ -66,6 +66,7 @@ export default function Workspace() {
 
     fetchWorkspaceItems();
   }, []);
+}
 
   const fields = [
     { key: "product", label: "产品" },
