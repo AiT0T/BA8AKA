@@ -1,8 +1,28 @@
+/* ============================
+ * BA8AKA 正文字体：思源宋体（自托管）
+ * ============================ */
+@font-face {
+  font-family: "BA8AKA-Serif";
+  src: url("/fonts/SourceHanSerifCN-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "BA8AKA-Serif";
+  src: url("/fonts/SourceHanSerifCN-SemiBold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Markdown 全局样式：改成偏“书面感”的宋体/衬线字体 */
 .markdown-content {
-  /* 优先使用系统里常见的宋体 / 思源宋体，没有时再退回 serif */
-  font-family: "STSong", "Songti SC", "SimSun",
-    "Noto Serif SC", "Source Han Serif SC", serif;
+  font-family: "BA8AKA-Serif",
+    "Noto Serif SC", "Source Han Serif SC",
+    "STSong", "Songti SC", "SimSun",
+    serif;
 
   font-size: 16px;          /* 手机 & 桌面默认字号 */
   line-height: 1.9;         /* 行距拉开一点，接近你图二的感觉 */
@@ -432,8 +452,10 @@
 .markdown-content .toastui-editor-contents p,
 .markdown-content .toastui-editor-contents li,
 .markdown-content .toastui-editor-contents span {
-  font-family: "STSong", "Songti SC", "SimSun",
-    "Noto Serif SC", "Source Han Serif SC", serif;
+  font-family: "BA8AKA-Serif",
+    "Noto Serif SC", "Source Han Serif SC",
+    "STSong", "Songti SC", "SimSun",
+    serif;
   font-size: 16px;
   line-height: 1.9;
   letter-spacing: 0.02em;
