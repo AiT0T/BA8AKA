@@ -13,7 +13,7 @@ import { ISite } from "../model/site";
 const DEFAULT_WORKSPACE_IMAGES = [
   "/myworkspace.jpg",
   // 将来如果再加图，只要在 public 放文件，然后在这里加路径
-  // "/myworkspace-2.jpg",
+  "/myworkspace-2.jpg",
   // "/myworkspace-3.jpg",
 ];
 
