@@ -44,7 +44,7 @@ export default function ArticleDetailPage() {
   const params = useParams();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showToc, setShowToc] = useState(true);
+  const [showToc, setShowToc] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
