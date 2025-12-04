@@ -173,7 +173,7 @@ export default function HomePageClient({ }: HomePageClientProps) {
       </div>
 
       <ListSection
-        title="📚 技术文章"
+        title="📚 我的文章"
         titleLink="/articles"
         items={articles}
       />
