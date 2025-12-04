@@ -6,22 +6,49 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { WorkspaceSkeleton } from "@/components/workspace/WorkspaceSkeleton";
 import { workspaceBusiness } from "@/app/business/workspace";
+import { useSiteStore } from "@/store/site";
+import { ISite } from "../model/site";
+
+// ⭐ 新增：默认图片列表，集中配置
+const DEFAULT_WORKSPACE_IMAGES = [
+  "/myworkspace.jpg",
+  // 将来如果再加图，只要在 public 放文件，然后在这里加路径
+  // "/myworkspace-2.jpg",
+  // "/myworkspace-3.jpg",
+];
 
 export default function Workspace() {
   const [workspaceItems, setWorkspaceItems] = useState<ItemType[]>([]);
+  const [bgImages, setBgImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { site } = useSiteStore();
 
-  // 这里只保留你自己的一张图片
-  const bgImages = ["/myworkspace.jpg"];
+  // 获取站点信息，决定用后台图还是本地图
+  useEffect(() => {
+    const updateBackgroundImages = (site: ISite | undefined) => {
+      const images: string[] = [];
 
+      if (site?.workspaceBgUrl1) images.push(site.workspaceBgUrl1);
+      if (site?.workspaceBgUrl2) images.push(site.workspaceBgUrl2);
+
+      // 如果后台没有配置，就用本地默认图列表
+      if (images.length === 0) {
+        setBgImages(DEFAULT_WORKSPACE_IMAGES);
+      } else {
+        setBgImages(images);
+      }
+    };
+
+    updateBackgroundImages(site);
+  }, [site]);
+
+  // ……下面这段获取 workspaceItems 的 useEffect 保持原样
   useEffect(() => {
     const fetchWorkspaceItems = async () => {
       setIsLoading(true);
-
       try {
         const items = await workspaceBusiness.getWorkspaceItems();
         const workspaceItemsArray = Array.isArray(items) ? items : [];
-
         const itemsForTable: ItemType[] = workspaceItemsArray.map((item) => ({
           id: item._id || "",
           product: item.product,
@@ -29,7 +56,6 @@ export default function Workspace() {
           buyAddress: item.buyAddress,
           buyLink: item.buyLink,
         }));
-
         setWorkspaceItems(itemsForTable);
       } catch (error) {
         console.error("Error fetching workspace items:", error);
