@@ -40,7 +40,7 @@ export const MobileView = (props: MobileViewProps) => {
         <div className="flex flex-col h-full">
           <div className="p-4 border-b bg-white sticky top-0 z-10">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-bold">技术文档分类</h2>
+              <h2 className="text-lg font-bold">我的文章分类</h2>
               <Link
                 href="/api/rss?type=articles"
                 target="_blank"
