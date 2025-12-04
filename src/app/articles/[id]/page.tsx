@@ -44,7 +44,6 @@ export default function ArticleDetailPage() {
   const params = useParams();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showToc, setShowToc] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -365,18 +364,17 @@ export default function ArticleDetailPage() {
     );
   };
 
-  const renderMobileView = () => {
-    if (!article) return null;
-    return (
-      <div className="fixed inset-0 flex flex-col">
-              {/* 固定在顶部的标题和目录 */}
+ const renderMobileView = () => {
+  if (!article) return null;
+  return (
+    <div className="fixed inset-0 flex flex-col">
+      {/* 顶部：返回箭头 + 标题 */}
       <div
         className={`fixed top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ${
           isHeaderVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
         <div className="p-4 border-b">
-          {/* 顶部：返回箭头 + 标题，同一行对齐 */}
           <div className="flex items-center">
             <button
               onClick={() => window.history.back()}
@@ -403,80 +401,21 @@ export default function ArticleDetailPage() {
               {article.title}
             </h1>
 
-            {/* 右侧占位，保证标题真正居中 */}
+            {/* 右侧占位，让标题真正居中 */}
             <div className="w-9" />
-          </div>
-
-          {/* 目录切换按钮 */}
-          <button
-            onClick={() => setShowToc(!showToc)}
-            className="mt-3 flex items-center text-gray-600 hover:text-black"
-          >
-            <svg
-              className={`w-4 h-4 mr-2 transition-transform ${
-                showToc ? "rotate-0" : "-rotate-90"
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-            目录
-          </button>
-
-            {/* 文章目录 */}
-            <div
-              className={`bg-gray-50 rounded-lg overflow-hidden transition-all duration-300 ${showToc ? "max-h-64" : "max-h-0"
-                }`}
-            >
-              <div className="p-4">
-                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar-thin">
-                  {article?.content
-                    ?.split("\n")
-                    .filter((line) => line.startsWith("#"))
-                    .map((heading, index) => {
-                      const level = heading.match(/^#+/)?.[0].length || 1;
-                      const text = heading.replace(/^#+\s+/, "");
-                      // Toast UI Editor 生成的 ID 规则：转换为小写，空格和特殊字符替换为连字符
-                      const headingId = text
-                        .toLowerCase()
-                        .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
-                        .replace(/^-+|-+$/g, "");
-                      return (
-                        <div
-                          key={index}
-                          className={`text-gray-700 hover:text-black cursor-pointer`}
-                          style={{ paddingLeft: `${(level - 1) * 1}rem` }}
-                          onClick={() => {
-                            scrollToHeading(text);
-                            setShowToc(false);
-                          }}
-                        >
-                          {text}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 文章内容 */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar-thin pt-24 pb-20">
-          <div className="p-4">
-            <div className="article-typography">{renderArticleContent()}</div>
           </div>
         </div>
       </div>
-    );
-  };
+
+      {/* 文章内容 */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar-thin pt-20 pb-20">
+        <div className="p-4">
+          <div className="article-typography">{renderArticleContent()}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
   const renderDesktopView = () => {
     if (!article) return null;
