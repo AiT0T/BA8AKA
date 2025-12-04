@@ -1,14 +1,20 @@
-/* Markdown 全局样式 */
+/* Markdown 全局样式：改成偏“书面感”的宋体/衬线字体 */
 .markdown-content {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
-  line-height: 1.6;
-  color: #333;
-  font-size: 16px;
+  /* 优先使用系统里常见的宋体 / 思源宋体，没有时再退回 serif */
+  font-family: "STSong", "Songti SC", "SimSun",
+    "Noto Serif SC", "Source Han Serif SC", serif;
+
+  font-size: 16px;          /* 手机 & 桌面默认字号 */
+  line-height: 1.9;         /* 行距拉开一点，接近你图二的感觉 */
+  letter-spacing: 0.02em;   /* 轻微加字间距 */
+  color: #222;              /* 比纯黑柔和一点 */
+
   text-align: left;
   padding: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
+
 
 /* 标题样式 */
 .markdown-content h1,
@@ -417,3 +423,38 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 }
+/* ===============================
+ * 覆盖 Toast UI 默认正文样式
+ * =============================== */
+
+/* 让内容区整体继承我们上面设置的字体 / 行高 */
+.markdown-content .toastui-editor-contents,
+.markdown-content .toastui-editor-contents p,
+.markdown-content .toastui-editor-contents li,
+.markdown-content .toastui-editor-contents span {
+  font-family: "STSong", "Songti SC", "SimSun",
+    "Noto Serif SC", "Source Han Serif SC", serif;
+  font-size: 16px;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+  color: #222;
+}
+
+/* 段落间距再拉一拉，避免被 12px 固定值限制 */
+.markdown-content .toastui-editor-contents p {
+  margin: 0.9em 0;
+}
+
+/* 列表整体行距和段落一致 */
+.markdown-content .toastui-editor-contents ul,
+.markdown-content .toastui-editor-contents ol {
+  margin: 0.8em 0;
+  padding-left: 1.4em;
+  line-height: 1.9;
+}
+
+/* 阻止 ToastUI 的 :not(table) 把 line-height 改回去 */
+.markdown-content .toastui-editor-contents :not(table) {
+  line-height: 1.9;
+}
+
