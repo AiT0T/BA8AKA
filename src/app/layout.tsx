@@ -30,8 +30,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: site?.title || "BA8AKA's blog",
     description:
-      site?.seo?.description || "ObjectX's articles about programming and life",
-    keywords: site?.seo?.keywords || [],
+      site?.seo?.description || "BA8AKA's articles about programming and life",
+    keywords: site?.seo?.keywords || ["BA8AKA",
+        "业余无线电",
+        "HAM",
+        "AI",
+        "前端开发",
+        "个人博客",],
+    icons: {
+      icon: "/favicon.ico", // 明确告诉 Next/浏览器用这个作为站点图标
+    },
     openGraph: {
       title: 'BA8AKA’ 子谦的个人博客网站,',
       siteName: "BA8AKA·子谦的个人博客",
