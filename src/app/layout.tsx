@@ -1,15 +1,17 @@
-import { cn } from "@/lib/utils";
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "@/styles/notion-scrollbar.css";
+
+import { cn } from "@/lib/utils";
 import SiteProvider from "@/components/providers/SiteProvider";
-import { getDb } from "@/lib/mongodb";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import GoogleTagManagerHead from "@/components/GoogleTagManagerHead";
 import GoogleTagManagerBody from "@/components/GoogleTagManagerBody";
 import Loading from "./Loading";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
+import { getDb } from "@/lib/mongodb";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,19 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
     "子谦BA8AKA的个人博客：聚焦业余无线电（HAM）、AI 研学与前端开发实践，也有旅行、摄影与生活方式笔记。";
   const siteLogo = site?.logo || `${siteUrl}/favicon.ico`;
 
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: siteName,
-    url: siteUrl,
-    logo: siteLogo,
-    sameAs: [
-      site?.social?.github || "https://github.com/AiT0T",
-      // 其他社交媒体链接可继续加
-    ],
-  };
-
   return {
+    metadataBase: new URL(siteUrl),
     title: siteName,
     description: siteDesc,
     keywords:
@@ -48,13 +39,6 @@ export async function generateMetadata(): Promise<Metadata> {
         "前端开发",
         "个人博客",
       ],
-    /**
-     * 这里把你放在 public/ 下的 favicon 全部声明出来
-     * /favicon.ico      -> 经典 ico
-     * /favicon-96x96.png
-     * /favicon.svg
-     * /apple-touch-icon.png
-     */
     icons: {
       icon: [
         { url: "/favicon.ico" },
@@ -62,8 +46,9 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: "/favicon.svg", type: "image/svg+xml" },
       ],
       apple: [
-        { url: "/apple-touch-icon.png", sizes: "180x180" },
+        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
       ],
+      shortcut: ["/favicon.ico"],
     },
     manifest: "/site.webmanifest",
     openGraph: {
@@ -74,24 +59,10 @@ export async function generateMetadata(): Promise<Metadata> {
       url: siteUrl,
       images: [siteLogo],
     },
-    other: {
-      ...(site?.isOpenAdsense && site?.googleAdsenseId
-        ? {
-            "google-adsense-account": `ca-pub-${site.googleAdsenseId}`,
-          }
-        : {}),
-      // 把 Organization 的 JSON-LD 序列化放在 meta 里，下面 <head> 里也会再输出一次 script，
-      // 不想重复的话也可以只保留下面那一份。
-      "ba8aka:organization-jsonld": JSON.stringify(organizationJsonLd),
-    },
   };
 }
 
-/**
- * 这里给 Google 一份静态的 Organization 结构化数据就够用了，
- * 不再用之前那个“如何优化 Next.js SEO”的 Article。
- */
-const jsonLdData = {
+const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "BA8AKA · 子谦的个人博客网站",
@@ -103,21 +74,29 @@ const jsonLdData = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="zh-CN">
       <head>
+        <meta name="baidu-site-verification" content="codeva-V7xyVqf0Mh" />
         <GoogleTagManagerHead />
         {/* Organization JSON-LD */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
         />
       </head>
-      <body className={`${cn(inter.className)} h-dvh w-dvw`}>
+      <body className={cn(inter.className, "h-dvh w-dvw")}>
         <SiteProvider>
           <GoogleTagManagerBody />
           <LayoutWrapper>
             <Suspense fallback={<Loading />}>{children}</Suspense>
-          <
+          </LayoutWrapper>
+        </SiteProvider>
+      </body>
+    </html>
+  );
+}
