@@ -19,23 +19,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'ObjectX 博客-一个专注前端 & Ai的网站',
-    url: 'https://object-x.net.cn',
-    logo: site?.logo || 'https://object-x.net.cn/logo.png',
+    name: 'BA8AKA 子谦的个人博客网站',
+    url: 'https://ba8aka.com',
+    logo: site?.logo || 'https://ba8aka.com/favicon.ico',
     sameAs: [
-      site?.social?.github || 'https://github.com/objectx',
+      site?.social?.github || 'https://github.com/AiT0T',
       // 其他社交媒体链接
     ]
   };
   return {
-    title: site?.title || "ObjectX's blog",
+    title: site?.title || "BA8AKA's blog",
     description:
       site?.seo?.description || "ObjectX's articles about programming and life",
     keywords: site?.seo?.keywords || [],
     openGraph: {
-      title: 'ObjectX 博客’ 一个专注前端 & Ai的网站,',
-      siteName: "ObjectX 博客",
-      description: site?.seo?.description || "ObjectX's articles about programming and life",
+      title: 'BA8AKA’ 子谦的个人博客网站,',
+      siteName: "BA8AKA·子谦的个人博客",
+      description: site?.seo?.description || "BA8AKA's articles about programming and life",
       type: "website",
     },
     other: {
@@ -55,12 +55,12 @@ const jsonLdData = {
   "headline": "如何优化 Next.js 网站的 SEO",
   "author": {
     "@type": "Person",
-    "name": "ObjectX"
+    "name": "BA8AKA"
   },
   "datePublished": "2025-03-18",
   "publisher": {
     "@type": "Organization",
-    "name": "ObjectX 博客",
+    "name": "BA8AKA 博客",
     "logo": {
       "@type": "ImageObject",
       "url": "https://example.com/logo.png"
