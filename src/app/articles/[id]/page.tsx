@@ -367,10 +367,10 @@ export default function ArticleDetailPage() {
  const renderMobileView = () => {
   if (!article) return null;
   return (
-    <div className="fixed inset-0 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* 顶部：返回箭头 + 标题 */}
       <div
-        className={`fixed top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ${
+        className={`sticky top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ${
           isHeaderVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
@@ -408,7 +408,7 @@ export default function ArticleDetailPage() {
       </div>
 
       {/* 文章内容 */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar-thin pt-20 pb-20">
+      <div className="flex-1 pt-20 pb-20">
         <div className="p-4">
           <div className="article-typography">{renderArticleContent()}</div>
         </div>
