@@ -89,7 +89,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={cn(inter.className, "h-dvh w-dvw")}>
+      <body className={cn(inter.className, "min-h-screen w-full")}>
         <SiteProvider>
           <GoogleTagManagerBody />
           <LayoutWrapper>
