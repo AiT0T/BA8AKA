@@ -25,8 +25,8 @@
     "STSong", "Songti SC", "SimSun",
     serif;
 
-  font-size: 16px;          /* 手机 & 桌面默认字号 */
-  line-height: 1.9;         /* 行距拉开一点，接近你图二的感觉 */
+  font-size: 15px;          /* 手机 & 桌面默认字号 */
+  line-height: 1.75;         /* 行距拉开一点，接近你图二的感觉 */
   letter-spacing: 0.02em;   /* 轻微加字间距 */
   color: #222;              /* 比纯黑柔和一点 */
 
