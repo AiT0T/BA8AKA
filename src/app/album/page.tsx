@@ -1,74 +1,108 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { usePhotos } from "@/app/hooks/usePhotos";
 import LoadingSkeleton from "./components/LoadingSkeleton";
 import ErrorMessage from "./components/ErrorMessage";
 import PhotoGrid from "./components/PhotoGrid";
 import CustomLightbox from "./components/CustomLightbox";
+import VideoGrid from "./components/VideoGrid";
+
+type AlbumTab = "photos" | "videos";
+
+function isVideoMedia(src: string, type?: string) {
+  return type === "video" || /\.(mp4|webm|ogg|mov|m4v)$/i.test(src);
+}
 
 export default function Album() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [activeTab, setActiveTab] = useState<AlbumTab>("photos");
   const { photos, loading, error, refetch } = usePhotos();
 
-  // 处理照片点击
+  const { imageItems, videoItems } = useMemo(() => {
+    return photos.reduce(
+      (result, item) => {
+        if (isVideoMedia(item.src, item.type)) {
+          result.videoItems.push({ ...item, type: "video" });
+        } else {
+          result.imageItems.push({ ...item, type: "image" });
+        }
+        return result;
+      },
+      { imageItems: [], videoItems: [] } as {
+        imageItems: typeof photos;
+        videoItems: typeof photos;
+      }
+    );
+  }, [photos]);
+
   const handlePhotoClick = (index: number) => {
-    console.log('相册页面收到点击事件，索引:', index);
-    console.log('设置selectedIndex为:', index);
-    console.log('当前photos数组长度:', photos.length);
     setSelectedIndex(index);
   };
 
-  // 关闭Lightbox
-  const handleCloseLightbox = () => {
+  const handleTabChange = (tab: AlbumTab) => {
+    setActiveTab(tab);
     setSelectedIndex(-1);
   };
 
-  // 处理索引变化
-  const handleIndexChange = (index: number) => {
-    setSelectedIndex(index);
-  };
-
-  // Loading状态
   if (loading) {
     return <LoadingSkeleton />;
   }
 
-  // Error状态
   if (error) {
     return <ErrorMessage error={error} onRetry={refetch} />;
   }
 
-  console.log('渲染相册页面，selectedIndex:', selectedIndex, 'isOpen:', selectedIndex >= 0);
-
   return (
-    <main className="flex h-screen w-full box-border flex-col overflow-y-auto py-8 px-8">
-      {/* 页面头部 */}
+    <main className="box-border flex h-screen w-full flex-col overflow-y-auto px-8 py-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">生活相册</h1>
-        <p className="text-gray-600 mb-2">
-          这里是我的生活相册，记录了我的生活中的美好时刻。
+        <h1 className="mb-4 text-3xl font-bold">生活相册</h1>
+        <p className="mb-3 text-gray-600">
+          这里记录生活里的照片和视频片段。
         </p>
         {photos.length > 0 && (
-          <p className="text-sm text-gray-500">
-            共 {photos.length} 张照片
+          <p className="mb-5 text-sm text-gray-500">
+            共 {imageItems.length} 张照片，{videoItems.length} 个视频
           </p>
         )}
+        <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => handleTabChange("photos")}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+              activeTab === "photos"
+                ? "bg-gray-900 text-white"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+          >
+            照片
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("videos")}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+              activeTab === "videos"
+                ? "bg-gray-900 text-white"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+          >
+            视频
+          </button>
+        </div>
       </header>
 
-      {/* 照片网格 */}
-      <PhotoGrid
-        photos={photos}
-        onPhotoClick={handlePhotoClick}
-      />
+      {activeTab === "photos" ? (
+        <PhotoGrid photos={imageItems} onPhotoClick={handlePhotoClick} />
+      ) : (
+        <VideoGrid videos={videoItems} />
+      )}
 
-      {/* 自定义 Lightbox */}
       <CustomLightbox
-        photos={photos}
+        photos={imageItems}
         currentIndex={selectedIndex}
         isOpen={selectedIndex >= 0}
-        onClose={handleCloseLightbox}
-        onIndexChange={handleIndexChange}
+        onClose={() => setSelectedIndex(-1)}
+        onIndexChange={setSelectedIndex}
       />
     </main>
   );
