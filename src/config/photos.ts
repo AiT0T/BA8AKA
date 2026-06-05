@@ -1,4 +1,4 @@
-import { Tags } from 'exiftool-vendored';
+import type { Tags } from 'exiftool-vendored';
 
 export interface Photo {
   src: string;
