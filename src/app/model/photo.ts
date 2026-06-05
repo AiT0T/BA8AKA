@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { Tags } from "exiftool-vendored";
+import type { Tags } from "exiftool-vendored";
 
 export interface ImageAnalysisResult {
   dimensions: {
