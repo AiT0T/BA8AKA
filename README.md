@@ -1,219 +1,115 @@
-# Next.js 博客项目
+# BA8AKA - 子谦的个人网站 ✨
 
-这是一个基于 Next.js 14 构建的现代化博客平台，结合了丰富的功能和优雅的用户界面。
+这是我的个人网站项目，用来记录文章、项目、书签、相册、旅行、健身、待办事项和一些日常灵感。网站部署在阿里云服务器上，通过 GitHub Actions 构建发布，尽量把构建压力从 2 核 2G 的服务器上挪走。
 
-## 📚 功能特点
+线上地址：[ba8aka.com](https://ba8aka.com)
 
-- 💻 **响应式设计**：完全适配桌面和移动端，提供流畅的用户体验
-- ✍️ **富文本编辑器**：
-  - 基于 Plate 和 Toast UI 的强大编辑器
-  - 支持 Markdown、代码高亮、表格、图片插入等
-  - 自动保存和历史记录功能
-- 📷 **相册和图片管理**：
-  - EXIF 数据提取和展示
-  - 图片压缩和优化
-  - 瀑布流图片展示
-  - 灯箱效果预览
-- 🔖 **书签收藏系统**：
-  - 分类管理
-  - 标签系统
-  - RSS 订阅支持
-  - 快速搜索和过滤
-- ⚡ **项目和工作经历展示**：
-  - 时间线视图
-  - 详细的项目描述和技术栈展示
-  - 可自定义的工作经历和教育经历模块
-- 🔄 **时间线和动态更新**：
-  - 支持多种内容类型（文章、项目、推文等）
-  - 自动聚合和排序
-  - 支持嵌入 Twitter 内容
-- 📊 **数据统计和可视化**：
-  - 网站访问和运行状态监控
-  - 文章阅读量和点赞统计
-  - 基于 Chart.js 的数据图表
-- 🔒 **用户认证与权限管理**：
-  - 基于 JWT 的安全认证
-  - 管理员与普通用户权限区分
-  - 安全的密码处理
-- 🎨 **现代 UI 设计**：
-  - 基于 Tailwind CSS 和 Shadcn UI
-  - 支持亮色/暗色模式
-  - 自定义组件和动画效果
+## 🌱 这个网站用来做什么
+
+- 📝 **写作与文章**：记录技术学习、生活思考、业余无线电、AI 和前端开发内容。
+- 📚 **书签收藏**：整理常用链接、资料和工具，方便以后快速查找。
+- 🖼️ **生活相册**：保存照片，支持 EXIF 信息、影调分析和瀑布流展示。
+- 🎬 **生活视频**：相册支持视频内容，后台上传后可在前台视频板块观看。
+- ✅ **任务清单**：只对管理员可见，用来管理个人待办和项目计划。
+- 🧭 **项目与时间线**：展示做过的项目、经历、旅行、健身记录和阶段性动态。
+- 🔐 **后台管理**：文章、相册、友链、项目、书签等内容都可以在后台维护。
 
 ## 🛠️ 技术栈
 
-### 前端
-- **框架**: Next.js 14（App Router）
-- **语言**: TypeScript
-- **样式**: 
-  - Tailwind CSS（实用工具类优先）
-  - Shadcn UI（无样式组件库）
-  - CSS 模块
-- **编辑器**: 
-  - Plate Editor（基于 Slate.js）
-  - Toast UI Editor（Markdown）
-- **状态管理**: Zustand
-- **UI组件**:
-  - Radix UI（无障碍性组件）
-  - Ant Design
-  - Framer Motion（动画）
-- **数据可视化**: Chart.js / React-Chartjs-2
+- **框架**：Next.js 14 / App Router
+- **语言**：TypeScript / React
+- **样式**：Tailwind CSS、Ant Design、Radix UI、Framer Motion
+- **数据库**：MongoDB
+- **对象存储**：阿里云 OSS
+- **认证**：JWT / jose
+- **图片与媒体**：browser-image-compression、Sharp、ExifTool
+- **内容处理**：MDX、Remark、Rehype、Prism、Shiki
+- **部署**：GitHub Actions + 阿里云服务器
 
-### 后端
-- **API**: Next.js API Routes / App Router Handlers
-- **数据库**: MongoDB / Mongoose
-- **认证**: JWT (使用 jose)
-- **存储**: 支持阿里云 OSS（ali-oss）
-- **媒体处理**: 
-  - Sharp（图像处理）
-  - Exiftool-vendored（元数据提取）
-
-### 内容处理
-- **Markdown**: 
-  - MDX
-  - Rehype 插件系统
-  - Remark 插件系统
-  - 代码高亮（Prism.js、Shiki）
-- **RSS**: RSS 生成器
-
-## 🚀 快速开始
-
-### 环境要求
-- Node.js 18+
-- PNPM 8+
-- MongoDB（可本地或远程）
-
-### 安装依赖
+## 🚀 本地运行
 
 ```bash
-# 使用 PNPM 安装依赖
 pnpm install
+pnpm dev
 ```
 
-### 环境变量配置
+访问：`http://localhost:3000`
 
-创建 `.env.local` 文件并添加以下变量（根据需要调整）：
+生产构建：
 
+```bash
+pnpm build
+pnpm start
 ```
-# 基础配置
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
-# 数据库连接
-MONGODB_URI=mongodb://localhost:27017/blog
+## 🔑 环境变量
 
-# JWT 密钥
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRES_IN=7d
+项目依赖 `.env.local` 或服务器环境变量。不要把真实密钥提交到仓库。
 
-# 阿里云 OSS 配置（可选）
+```env
+# 站点
+NEXT_PUBLIC_BASE_URL=https://ba8aka.com
+ALLOWED_ORIGIN=https://ba8aka.com
+
+# 数据库
+MONGODB_URI=
+
+# 管理员登录
+ADMIN_USERNAME=
+ADMIN_PASSWORD=
+JWT_SECRET=
+
+# 阿里云 OSS
 OSS_REGION=
 OSS_ACCESS_KEY_ID=
 OSS_ACCESS_KEY_SECRET=
 OSS_BUCKET=
 ```
 
-### 开发环境
+`JWT_SECRET` 建议使用 32 位以上随机字符串，并保持 GitHub Secrets 与服务器 `/srv/ba8aka/shared/.env.local` 一致。
 
-```bash
-pnpm dev
-```
+## 📦 部署说明
 
-访问 http://localhost:3000 查看应用
+这个项目主要通过 GitHub Actions 构建部署。原因是服务器配置较小，直接在服务器构建容易卡死或失败。
 
-### 构建生产版本
+大致流程：
 
-```bash
-pnpm build
-```
-
-### 启动生产服务器
-
-```bash
-pnpm start
-```
-
-## 🐳 Docker 支持
-
-项目包含 Dockerfile，可以轻松构建和部署容器化应用。
-
-```bash
-# 构建Docker镜像
-docker build -t nextjs-blog .
-
-# 运行容器
-docker run -p 3000:3000 -e MONGODB_URI=your_mongodb_connection_string nextjs-blog
-```
-
-可以通过 Docker Compose 进一步简化部署：
-
-```yaml
-# docker-compose.yml
-version: '3'
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - MONGODB_URI=mongodb://mongo:27017/blog
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - mongo
-  
-  mongo:
-    image: mongo
-    volumes:
-      - mongo-data:/data/db
-    ports:
-      - "27017:27017"
-
-volumes:
-  mongo-data:
-```
+1. 推送代码到 GitHub。
+2. GitHub Actions 读取 Repository Secrets。
+3. 在 GitHub Runner 上完成构建。
+4. 将构建产物同步到阿里云服务器。
+5. 服务器使用共享环境变量文件启动应用。
 
 ## 🧩 项目结构
 
-```
+```text
 src/
-├── app/                # Next.js 应用目录
-│   ├── api/            # API 路由
-│   │   ├── articles/   # 文章相关 API
-│   │   ├── auth/       # 认证相关 API
-│   │   ├── rss/        # RSS 生成 API
-│   │   └── ...
-│   ├── articles/       # 文章页面
-│   ├── album/          # 相册页面
-│   ├── bookmarks/      # 书签页面
-│   ├── admin/          # 管理后台
+├── app/                 # Next.js App Router 页面和 API
+│   ├── admin/           # 后台管理
+│   ├── album/           # 生活相册与视频
+│   ├── api/             # API Routes
+│   ├── articles/        # 文章页面
+│   ├── bookmarks/       # 书签页面
+│   ├── todos/           # 管理员任务清单
 │   └── ...
-├── components/         # React 组件
-│   ├── HomePage/       # 首页相关组件
-│   ├── customMdRender/ # 自定义 Markdown 渲染器
-│   ├── icons/          # 图标组件
-│   ├── ui/             # UI 基础组件
-│   └── ...
-├── lib/                # 工具库
-│   ├── auth/           # 认证相关功能
-│   ├── db/             # 数据库连接和操作
-│   └── ...
-├── utils/              # 实用工具函数
-│   ├── time.ts         # 时间处理
-│   ├── format.ts       # 格式化
-│   └── ...
-├── hooks/              # 自定义 React Hooks
-├── styles/             # 样式文件
-├── store/              # 状态管理
-├── types/              # TypeScript 类型定义
-├── config/             # 配置文件
-└── docs/               # 文档
+├── components/          # 通用组件
+├── config/              # 静态配置
+├── hooks/               # React Hooks
+├── lib/                 # 数据库、工具库
+├── styles/              # 样式文件
+├── utils/               # 通用工具函数
+└── app/model/           # MongoDB 数据模型
 ```
 
-## 📄 许可证
+## 🔒 安全笔记
 
-本项目使用 MIT 许可证，详情请查看 [LICENSE](./LICENSE) 文件。
+- OSS 密钥只应存在于服务器环境变量和 GitHub Secrets 中。
+- 不要使用 `NEXT_PUBLIC_` 暴露任何敏感配置。
+- 后台接口、上传接口、待办接口都应要求管理员登录。
+- 上传文件有大小限制，当前限制为 300M。
 
-## 🙏 致谢
+## 🙋‍♂️ 关于我
 
-- Next.js 团队提供的出色框架
-- MongoDB 提供的数据库解决方案
-- 所有为本项目做出贡献的开发者
+我是子谦，呼号 BA8AKA。这个网站是我的个人数字花园，也是一个持续迭代的小作品。
+
+它不只是博客，更像是把生活、学习和项目慢慢收拢起来的地方。

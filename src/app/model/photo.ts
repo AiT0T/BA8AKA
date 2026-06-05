@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
-import { Tags } from 'exiftool-vendored'
+import type { Tags } from "exiftool-vendored";
 
-// 影调分析结果接口
 export interface ImageAnalysisResult {
   dimensions: {
     width: number;
@@ -36,30 +35,36 @@ export interface ImageAnalysisResult {
 
 export interface IPhoto {
   _id?: string;
+  type?: "image" | "video";
   src: string;
   width: number;
   height: number;
   title: string;
   location: string;
   date: string;
+  thumbnail?: string;
+  duration?: number;
   exif?: Tags & {
     ExposureCompensation?: number;
   };
-  imageAnalysis?: ImageAnalysisResult; // 新增影调分析字段
+  imageAnalysis?: ImageAnalysisResult;
   createdAt?: string;
   updatedAt?: string;
 }
 
 const photoSchema = new Schema<IPhoto>(
   {
+    type: { type: String, enum: ["image", "video"], default: "image" },
     src: { type: String, required: true },
     width: { type: Number, required: true },
     height: { type: Number, required: true },
     title: { type: String, required: true },
     location: { type: String, required: true },
     date: { type: String, required: true },
-    exif: { type: Schema.Types.Mixed },  // 使用Mixed类型存储任意EXIF数据
-    imageAnalysis: { type: Schema.Types.Mixed }, // 新增影调分析字段
+    thumbnail: { type: String },
+    duration: { type: Number },
+    exif: { type: Schema.Types.Mixed },
+    imageAnalysis: { type: Schema.Types.Mixed },
   },
   {
     timestamps: true,
@@ -67,4 +72,5 @@ const photoSchema = new Schema<IPhoto>(
 );
 
 export const Photo =
-  (mongoose.models && mongoose.models.Photo) || mongoose.model<IPhoto>("Photo", photoSchema);
+  (mongoose.models && mongoose.models.Photo) ||
+  mongoose.model<IPhoto>("Photo", photoSchema);

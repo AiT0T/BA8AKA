@@ -13,12 +13,15 @@ export const POST = withErrorHandler<[Request], { photo: IPhoto }>(async (reques
   RequestValidator.validateRequired(data, ['src', 'width', 'height', 'title', 'location', 'date']);
 
   const photo = {
+    type: data.type || "image",
     src: data.src,
     width: data.width,
     height: data.height,
     title: data.title,
     location: data.location,
     date: data.date,
+    ...(data.thumbnail && { thumbnail: data.thumbnail }),
+    ...(data.duration && { duration: data.duration }),
     ...(data.exif && { exif: data.exif }),
     ...(data.imageAnalysis && { imageAnalysis: data.imageAnalysis }),
     createdAt: new Date().toISOString(),
@@ -35,12 +38,15 @@ export const PUT = withErrorHandler<[Request], { photo: IPhoto }>(async (request
   RequestValidator.validateRequired(data, ['_id', 'src', 'width', 'height', 'title', 'location', 'date']);
 
   const updateData = {
+    ...(data.type && { type: data.type }),
     ...(data.src && { src: data.src }),
     ...(data.width && { width: data.width }),
     ...(data.height && { height: data.height }),
     ...(data.title && { title: data.title }),
     ...(data.location && { location: data.location }),
     ...(data.date && { date: data.date }),
+    ...(data.thumbnail && { thumbnail: data.thumbnail }),
+    ...(data.duration && { duration: data.duration }),
     ...(data.exif && { exif: data.exif }),
     ...(data.imageAnalysis && { imageAnalysis: data.imageAnalysis }),
     updatedAt: new Date().toISOString(),

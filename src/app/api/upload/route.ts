@@ -3,120 +3,135 @@ import OSS from "ali-oss";
 import { v4 as uuidv4 } from "uuid";
 import { Readable } from "stream";
 
-export const runtime = 'nodejs';
-export const maxDuration = 300; // 大文件上传给足执行时间
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
-// Check if all required environment variables are set
-const requiredEnvVars = {
-  region: process.env.OSS_REGION || process.env.NEXT_PUBLIC_OSS_REGION,
-  accessKeyId:
-    process.env.OSS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_OSS_ACCESS_KEY_ID,
-  accessKeySecret:
-    process.env.OSS_ACCESS_KEY_SECRET ||
-    process.env.NEXT_PUBLIC_OSS_ACCESS_KEY_SECRET,
-  bucket: process.env.OSS_BUCKET || process.env.NEXT_PUBLIC_OSS_BUCKET,
+const MAX_UPLOAD_SIZE = 300 * 1024 * 1024;
+const allowedTypes = ["text/markdown", "text/plain", "image/", "video/"];
+
+const ossConfig = {
+  region: process.env.OSS_REGION,
+  accessKeyId: process.env.OSS_ACCESS_KEY_ID,
+  accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
+  bucket: process.env.OSS_BUCKET,
 };
 
-// Validate environment variables
-const missingEnvVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key]) => key);
-
-if (missingEnvVars.length > 0) {
-  console.error(
-    `Missing required environment variables: ${missingEnvVars.join(", ")}`
-  );
+function missingOssEnvVars() {
+  return Object.entries(ossConfig)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
 }
 
-const client = new OSS({
-  region: requiredEnvVars.region!,
-  accessKeyId: requiredEnvVars.accessKeyId!,
-  accessKeySecret: requiredEnvVars.accessKeySecret!,
-  bucket: requiredEnvVars.bucket!,
-});
-
-// 重试配置
-const RETRY_CONFIG = {
-  maxRetries: 3,
-  initialDelay: 1000, // 1秒
-  maxDelay: 5000, // 5秒
-};
-
-// 延迟函数
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// 带重试的上传函数
-async function uploadWithRetry(
-  client: OSS,
-  filename: string,
-  buffer: Buffer,
-  attempt: number = 1
-): Promise<OSS.PutObjectResult> {
-  try {
-    return await client.put(filename, buffer);
-  } catch (err) {
-    if (attempt >= RETRY_CONFIG.maxRetries) {
-      throw err;
-    }
-
-    const delayTime = Math.min(
-      RETRY_CONFIG.initialDelay * Math.pow(2, attempt - 1),
-      RETRY_CONFIG.maxDelay
-    );
-    await delay(delayTime);
-
-    return uploadWithRetry(client, filename, buffer, attempt + 1);
+function createOssClient() {
+  const missing = missingOssEnvVars();
+  if (missing.length > 0) {
+    throw new Error(`Missing required OSS environment variables: ${missing.join(", ")}`);
   }
+
+  return new OSS({
+    region: ossConfig.region!,
+    accessKeyId: ossConfig.accessKeyId!,
+    accessKeySecret: ossConfig.accessKeySecret!,
+    bucket: ossConfig.bucket!,
+  });
+}
+
+function sanitizeDirectory(value: FormDataEntryValue | string | null): string {
+  if (typeof value !== "string" || !value.trim()) {
+    return "";
+  }
+
+  const sanitized = value
+    .trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => segment.replace(/[^a-zA-Z0-9_-]/g, ""))
+    .filter(Boolean)
+    .join("/");
+
+  return sanitized;
+}
+
+function isAllowedFile(file: File) {
+  return allowedTypes.some((type) => file.type.startsWith(type) || file.name.endsWith(".md"));
+}
+
+function getBasePath(file: File) {
+  if (file.type.startsWith("image/")) {
+    return "images";
+  }
+
+  if (file.type.startsWith("video/")) {
+    return "videos";
+  }
+
+  return "articles";
+}
+
+function buildObjectName(file: File, directory: string, extension: string) {
+  const basePath = getBasePath(file);
+  const firstSegment = directory.split("/")[0];
+  const objectDirectory = directory
+    ? firstSegment === basePath
+      ? directory
+      : `${basePath}/${directory}`
+    : basePath === "articles"
+      ? "articles"
+      : `${basePath}/articles`;
+
+  return `${objectDirectory}/${uuidv4()}.${extension}`;
 }
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const directory = formData.get("directory") as string || "articles"; // 获取目录参数
-
-    if (!file) {
+    const contentLength = Number(request.headers.get("content-length") || 0);
+    if (contentLength > MAX_UPLOAD_SIZE) {
       return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
+        { error: "File size exceeds 300M limit" },
+        { status: 413 }
       );
     }
 
-    // 检查文件类型
-    const allowedTypes = ["text/markdown", "text/plain", "image/", "video/"];
-    const isAllowedType = allowedTypes.some(type =>
-      file.type.startsWith(type) || file.name.endsWith(".md")
+    const requestUrl = new URL(request.url);
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    const directory = sanitizeDirectory(
+      formData.get("directory") ||
+      formData.get("path") ||
+      requestUrl.searchParams.get("path")
     );
 
-    if (!isAllowedType) {
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (file.size > MAX_UPLOAD_SIZE) {
+      return NextResponse.json(
+        { error: "File size exceeds 300M limit" },
+        { status: 413 }
+      );
+    }
+
+    if (!isAllowedFile(file)) {
       return NextResponse.json(
         { error: "Only markdown, image and video files are allowed" },
         { status: 400 }
       );
     }
 
-    // 获取文件扩展名
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (!extension) {
-      return NextResponse.json(
-        { error: "Invalid file extension" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid file extension" }, { status: 400 });
     }
 
-    // 根据文件类型决定存储路径
-    let basePath = "articles";
-    if (file.type.startsWith("image/")) {
-      basePath = "images";
-    } else if (file.type.startsWith("video/")) {
-      basePath = "videos";
-    }
-    const filename = `${basePath}/${directory}/${uuidv4()}.${extension}`;
+    const filename = buildObjectName(file, directory, extension);
+    const stream = Readable.fromWeb(file.stream() as any);
+    const client = createOssClient();
 
-  const stream = Readable.fromWeb(file.stream() as any);
-  const result = await client.putStream(filename, stream);
+    await client.putStream(filename, stream);
 
-  const url = `https://${process.env.OSS_BUCKET}.${process.env.OSS_REGION}.aliyuncs.com/${filename}`;
+    const url = `https://${ossConfig.bucket}.${ossConfig.region}.aliyuncs.com/${filename}`;
 
     return NextResponse.json({ url });
   } catch (error: any) {

@@ -2,114 +2,169 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "./utils/auth";
 
-// 限流缓存
-const rateLimit = new Map<string, { count: number; timestamp: number }>();
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS";
 
-// 权限规则定义
 type RouteRule = {
-  path: string;
-  methods?: string[];
+  pattern: RegExp;
+  methods?: Method[];
   public?: boolean;
-  adminOnly?: boolean;
-  rateLimit?: boolean;
+  rateLimit?: {
+    limit: number;
+    windowMs: number;
+  };
 };
 
-// 路由权限配置
-const routeRules: RouteRule[] = [
-  { path: "/api/auth", public: true },
-  { path: "/api/auth/login", public: true },
-  { path: "/api/articles/[id]/like", public: true },
-  { path: "/api/inspirations/[id]/stats", public: true },
-  { path: "/api/demos/[id]", public: true },
-  { path: "/api/site", public: true, methods: ["PATCH"] },
+const ONE_MINUTE = 60_000;
 
-  { path: "/api/site", adminOnly: true, methods: ["POST", "PUT", "DELETE"] },
-  { path: "/api/articles", adminOnly: true, methods: ["POST", "PUT", "DELETE"] },
-  { path: "/api/inspirations", adminOnly: true, methods: ["POST", "PUT", "DELETE"] },
-  { path: "/api/demos", adminOnly: true, methods: ["POST", "PUT", "DELETE"] },
+const publicApiRules: RouteRule[] = [
+  { pattern: /^\/api\/auth$/, public: true, methods: ["GET", "POST", "DELETE"], rateLimit: { limit: 20, windowMs: ONE_MINUTE } },
+  { pattern: /^\/api\/site$/, public: true, methods: ["GET", "PATCH"], rateLimit: { limit: 120, windowMs: ONE_MINUTE } },
 
-  { path: "/api/articles", rateLimit: true },
-  { path: "/api/inspirations", rateLimit: true },
-  { path: "/api/demos", rateLimit: true },
+  { pattern: /^\/api\/articles(?:\/.*)?$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/articles\/[^/]+\/like$/, public: true, methods: ["POST"], rateLimit: { limit: 60, windowMs: ONE_MINUTE } },
+  { pattern: /^\/api\/articles\/[^/]+\/view$/, public: true, methods: ["POST"], rateLimit: { limit: 120, windowMs: ONE_MINUTE } },
+
+  { pattern: /^\/api\/bookmarks(?:\/.*)?$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/demos(?:\/.*)?$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/fitness$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/friends$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/friends\/submit$/, public: true, methods: ["POST"], rateLimit: { limit: 10, windowMs: ONE_MINUTE } },
+  { pattern: /^\/api\/inspirations(?:\/.*)?$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/inspirations\/[^/]+\/stats$/, public: true, methods: ["POST"], rateLimit: { limit: 120, windowMs: ONE_MINUTE } },
+  { pattern: /^\/api\/photos$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/projects(?:\/categories)?$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/rss$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/social-links$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/stacks$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/timelines(?:\/.*)?$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/travel$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/work-experience$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/workspaces$/, public: true, methods: ["GET"] },
+
+  { pattern: /^\/api\/captcha\/available$/, public: true, methods: ["GET"], rateLimit: { limit: 30, windowMs: ONE_MINUTE } },
+  { pattern: /^\/api\/captcha\/[^/]+$/, public: true, methods: ["GET", "PUT"], rateLimit: { limit: 30, windowMs: ONE_MINUTE } },
+  { pattern: /^\/api\/captcha$/, public: true, methods: ["POST", "DELETE"], rateLimit: { limit: 10, windowMs: ONE_MINUTE } },
+
+  { pattern: /^\/api\/proxy-content$/, public: true, methods: ["GET"], rateLimit: { limit: 120, windowMs: ONE_MINUTE } },
 ];
 
-// 路径匹配工具
-function matchRoute(pathname: string, method: string) {
-  return routeRules.find((rule) => {
-    const regex = new RegExp("^" + rule.path.replace(/\[id\]/g, "[^/]+") + "$");
-    return regex.test(pathname) && (!rule.methods || rule.methods.includes(method));
+const protectedApiRules: RouteRule[] = [
+  { pattern: /^\/api\/captcha$/, methods: ["GET"] },
+  { pattern: /^\/api\/exif$/ },
+  { pattern: /^\/api\/image-analysis$/ },
+  { pattern: /^\/api\/project-requirements(?:\/.*)?$/ },
+  { pattern: /^\/api\/proxy-image$/ },
+  { pattern: /^\/api\/screenshot$/ },
+  { pattern: /^\/api\/todos(?:\/.*)?$/ },
+  { pattern: /^\/api\/upload$/ },
+];
+
+const rateLimit = new Map<string, { count: number; timestamp: number }>();
+
+function getClientIp(request: NextRequest): string {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  return request.headers.get("x-real-ip") || "unknown";
+}
+
+function findRule(rules: RouteRule[], pathname: string, method: Method) {
+  return rules.find((rule) => {
+    return rule.pattern.test(pathname) && (!rule.methods || rule.methods.includes(method));
   });
 }
 
-// 限流检查
-function checkRateLimit(ip: string, limit = 300, windowMs = 60_000): boolean {
+function isRateLimited(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
-  const current = rateLimit.get(ip) || { count: 0, timestamp: now };
+  const current = rateLimit.get(key) || { count: 0, timestamp: now };
 
   if (now - current.timestamp > windowMs) {
     current.count = 0;
     current.timestamp = now;
   }
 
-  current.count++;
-  rateLimit.set(ip, current);
+  current.count += 1;
+  rateLimit.set(key, current);
 
   return current.count > limit;
 }
 
+function jsonError(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
+}
+
+function applyRateLimit(request: NextRequest, rule?: RouteRule) {
+  if (!rule?.rateLimit) {
+    return null;
+  }
+
+  const ip = getClientIp(request);
+  const key = `${ip}:${request.nextUrl.pathname}:${request.method}`;
+
+  if (isRateLimited(key, rule.rateLimit.limit, rule.rateLimit.windowMs)) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": Math.ceil(rule.rateLimit.windowMs / 1000).toString(),
+        },
+      }
+    );
+  }
+
+  return null;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const method = request.method;
+  const method = request.method as Method;
+  const token = request.cookies.get("admin_token")?.value;
+  const isValidToken = token ? await verifyToken(token) : false;
 
   const isAdminRoute = pathname.startsWith("/admin");
+  const isTodoPage = pathname === "/todos" || pathname.startsWith("/todos/");
   const isLoginPage = pathname === "/login";
   const isApiRoute = pathname.startsWith("/api");
 
-  const route = matchRoute(pathname, method);
-  const token = request.cookies.get("admin_token")?.value;
-  const isValidToken = token ? await verifyToken(token) : null;
-
-  // 公开路径直接放行
-  if (route?.public) {
+  if (method === "OPTIONS") {
     return NextResponse.next();
   }
 
-  // 管理员权限校验
-  if (route?.adminOnly && !isValidToken) {
-    return new NextResponse(JSON.stringify({ error: "需要管理员权限" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (isLoginPage && isValidToken) {
+    return NextResponse.redirect(new URL("/admin/bookmarks", request.url));
   }
 
-  // 限流检查（仅限部分需要限流的接口）
-  if (route?.rateLimit) {
-    const ip = request.ip || "unknown";
-    if (checkRateLimit(ip)) {
-      return new NextResponse(JSON.stringify({ error: "请求太频繁，请稍后再试" }), {
-        status: 429,
-        headers: {
-          "Content-Type": "application/json",
-          "Retry-After": "60",
-        },
-      });
-    }
-  }
-
-  // 后台管理页面需要登录
-  if (isAdminRoute && !isValidToken) {
+  if ((isAdminRoute || isTodoPage) && !isValidToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 已登录用户访问登录页，跳转后台首页
-  if (isLoginPage && isValidToken) {
-    return NextResponse.redirect(new URL("/admin/bookmarks", request.url));
+  if (!isApiRoute) {
+    return NextResponse.next();
+  }
+
+  const publicRule = findRule(publicApiRules, pathname, method);
+  const protectedRule = findRule(protectedApiRules, pathname, method);
+  const isUnsafeMethod = method !== "GET";
+
+  const rateLimitResponse = applyRateLimit(request, publicRule || protectedRule);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
+  if (publicRule?.public) {
+    return NextResponse.next();
+  }
+
+  if ((protectedRule || isUnsafeMethod) && !isValidToken) {
+    return jsonError("Unauthorized", 401);
   }
 
   return NextResponse.next();
 }
 
-// 匹配所有 API 和 admin 路由
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/api/:path*"],
+  matcher: ["/admin/:path*", "/todos/:path*", "/todos", "/login", "/api/:path*"],
 };
