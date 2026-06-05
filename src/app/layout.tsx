@@ -1,10 +1,7 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import "@/styles/notion-scrollbar.css";
 
-import { cn } from "@/lib/utils";
 import SiteProvider from "@/components/providers/SiteProvider";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import GoogleTagManagerHead from "@/components/GoogleTagManagerHead";
@@ -13,17 +10,17 @@ import Loading from "./Loading";
 import { Suspense, type ReactNode } from "react";
 import { getDb } from "@/lib/mongodb";
 
-const inter = Inter({ subsets: ["latin"] });
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const db = await getDb();
   const site = await db.collection("sites").findOne({});
 
   const siteUrl = "https://ba8aka.com";
-  const siteName = site?.title || "BA8AKA · 子谦的个人博客网站";
+  const siteName = site?.title || "BA8AKA - 子谦的个人博客网站";
   const siteDesc =
     site?.seo?.description ||
-    "子谦BA8AKA的个人博客：聚焦业余无线电（HAM）、AI 研学与前端开发实践，也有旅行、摄影与生活方式笔记。";
+    "子谦 BA8AKA 的个人博客：记录业余无线电、AI 研学、前端开发、旅行、摄影与生活方式。";
   const siteLogo = site?.logo || `${siteUrl}/favicon.ico`;
 
   return {
@@ -65,7 +62,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "BA8AKA · 子谦的个人博客网站",
+  name: "BA8AKA - 子谦的个人博客网站",
   url: "https://ba8aka.com",
   logo: "https://ba8aka.com/favicon.ico",
   sameAs: ["https://github.com/AiT0T"],
@@ -81,7 +78,6 @@ export default function RootLayout({
       <head>
         <meta name="baidu-site-verification" content="codeva-V7xyVqf0Mh" />
         <GoogleTagManagerHead />
-        {/* Organization JSON-LD */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -89,7 +85,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={cn(inter.className, "min-h-screen w-full")}>
+      <body className="min-h-screen w-full font-sans">
         <SiteProvider>
           <GoogleTagManagerBody />
           <LayoutWrapper>
