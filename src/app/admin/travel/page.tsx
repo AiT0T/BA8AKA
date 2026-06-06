@@ -34,6 +34,7 @@ import { ITravelRecord, ITravelImage, ITravelVideo } from "@/app/model/travel";
 
 const { Text, Paragraph } = Typography;
 const { Option } = Select;
+const MAX_VIDEO_SIZE_MB = 300;
 
 export default function TravelAdmin() {
     const [form] = Form.useForm();
@@ -318,9 +319,9 @@ export default function TravelAdmin() {
             return;
         }
 
-        const oversizedFiles = videoFiles.filter(file => file.size > 50 * 1024 * 1024);
+        const oversizedFiles = videoFiles.filter(file => file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024);
         if (oversizedFiles.length > 0) {
-            message.warning(`以下视频文件超过50MB限制: ${oversizedFiles.map(f => f.name).join(', ')}`);
+            message.warning(`以下视频文件超过${MAX_VIDEO_SIZE_MB}MB限制: ${oversizedFiles.map(f => f.name).join(', ')}`);
             return;
         }
 
@@ -776,4 +777,4 @@ export default function TravelAdmin() {
             </Modal>
         </div>
     );
-} 
+}

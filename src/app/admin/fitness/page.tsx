@@ -29,6 +29,7 @@ import { fitnessBusiness } from "@/app/business/fitness";
 import { IFitnessRecord, IFitnessImage, IFitnessVideo } from "@/app/model/fitness";
 
 const { Text, Paragraph } = Typography;
+const MAX_VIDEO_SIZE_MB = 300;
 
 export default function FitnessAdmin() {
     const [form] = Form.useForm();
@@ -302,10 +303,10 @@ export default function FitnessAdmin() {
             return;
         }
 
-        // Check file size (limit to 50MB per video)
-        const oversizedFiles = videoFiles.filter(file => file.size > 50 * 1024 * 1024);
+        // Check file size (limit to 300MB per video)
+        const oversizedFiles = videoFiles.filter(file => file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024);
         if (oversizedFiles.length > 0) {
-            message.warning(`以下视频文件超过50MB限制: ${oversizedFiles.map(f => f.name).join(', ')}`);
+            message.warning(`以下视频文件超过${MAX_VIDEO_SIZE_MB}MB限制: ${oversizedFiles.map(f => f.name).join(', ')}`);
             return;
         }
 
@@ -657,4 +658,4 @@ export default function FitnessAdmin() {
             </Modal>
         </div>
     );
-} 
+}
