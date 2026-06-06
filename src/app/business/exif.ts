@@ -1,5 +1,5 @@
 import { request } from "@/utils/request";
-import { Tags } from 'exiftool-vendored';
+import type { Tags } from 'exiftool-vendored';
 
 export interface ExifExtractionResult {
     success: boolean;
@@ -134,4 +134,4 @@ class ExifBusiness {
     }
 }
 
-export const exifBusiness = new ExifBusiness(); 
+export const exifBusiness = new ExifBusiness();
