@@ -25,7 +25,6 @@ const publicApiRules: RouteRule[] = [
   { pattern: /^\/api\/articles\/[^/]+\/view$/, public: true, methods: ["POST"], rateLimit: { limit: 120, windowMs: ONE_MINUTE } },
 
   { pattern: /^\/api\/bookmarks(?:\/.*)?$/, public: true, methods: ["GET"] },
-  { pattern: /^\/api\/demos(?:\/.*)?$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/fitness$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/friends$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/friends\/submit$/, public: true, methods: ["POST"], rateLimit: { limit: 10, windowMs: ONE_MINUTE } },
@@ -34,11 +33,10 @@ const publicApiRules: RouteRule[] = [
   { pattern: /^\/api\/photos$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/projects(?:\/categories)?$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/rss$/, public: true, methods: ["GET"] },
+  { pattern: /^\/api\/screenshot$/, public: true, methods: ["GET"], rateLimit: { limit: 60, windowMs: ONE_MINUTE } },
   { pattern: /^\/api\/social-links$/, public: true, methods: ["GET"] },
-  { pattern: /^\/api\/stacks$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/timelines(?:\/.*)?$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/travel$/, public: true, methods: ["GET"] },
-  { pattern: /^\/api\/work-experience$/, public: true, methods: ["GET"] },
   { pattern: /^\/api\/workspaces$/, public: true, methods: ["GET"] },
 
   { pattern: /^\/api\/captcha\/available$/, public: true, methods: ["GET"], rateLimit: { limit: 30, windowMs: ONE_MINUTE } },
@@ -50,13 +48,15 @@ const publicApiRules: RouteRule[] = [
 
 const protectedApiRules: RouteRule[] = [
   { pattern: /^\/api\/captcha$/, methods: ["GET"] },
+  { pattern: /^\/api\/demos(?:\/.*)?$/ },
   { pattern: /^\/api\/exif$/ },
   { pattern: /^\/api\/image-analysis$/ },
   { pattern: /^\/api\/project-requirements(?:\/.*)?$/ },
   { pattern: /^\/api\/proxy-image$/ },
-  { pattern: /^\/api\/screenshot$/ },
+  { pattern: /^\/api\/stacks$/ },
   { pattern: /^\/api\/todos(?:\/.*)?$/ },
   { pattern: /^\/api\/upload$/ },
+  { pattern: /^\/api\/work-experience$/ },
 ];
 
 const rateLimit = new Map<string, { count: number; timestamp: number }>();
@@ -126,6 +126,13 @@ export async function middleware(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith("/admin");
   const isTodoPage = pathname === "/todos" || pathname.startsWith("/todos/");
+  const isProjectRequirementsPage =
+    pathname === "/project-requirements" || pathname.startsWith("/project-requirements/");
+  const isHiddenPublicPage =
+    pathname === "/demos" ||
+    pathname.startsWith("/demos/") ||
+    pathname === "/stack" ||
+    pathname.startsWith("/stack/");
   const isLoginPage = pathname === "/login";
   const isApiRoute = pathname.startsWith("/api");
 
@@ -137,7 +144,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/bookmarks", request.url));
   }
 
-  if ((isAdminRoute || isTodoPage) && !isValidToken) {
+  if (isHiddenPublicPage) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if ((isAdminRoute || isTodoPage || isProjectRequirementsPage) && !isValidToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -166,5 +177,17 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/todos/:path*", "/todos", "/login", "/api/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/todos/:path*",
+    "/todos",
+    "/project-requirements/:path*",
+    "/project-requirements",
+    "/demos/:path*",
+    "/demos",
+    "/stack/:path*",
+    "/stack",
+    "/login",
+    "/api/:path*",
+  ],
 };
