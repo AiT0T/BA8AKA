@@ -41,7 +41,9 @@ export default function NewArticlePage() {
   const [articleSettings, setArticleSettings] = useState({
     title: '',
     categoryId: '',
-    status: ArticleStatus.DRAFT
+    status: ArticleStatus.DRAFT,
+    sourceType: 'local' as 'local' | 'feishu' | 'external',
+    externalUrl: '',
   });
 
   // 加载分类列表
@@ -68,32 +70,47 @@ export default function NewArticlePage() {
   const saveArticle = async () => {
     try {
       setLoading(true);
+      const isExternalArticle = articleSettings.sourceType !== 'local' && articleSettings.externalUrl.trim();
 
-      // 1. 上传 Markdown 内容到 OSS
-      const markdownBlob = new Blob([content], { type: 'text/markdown' });
-      const formData = new FormData();
-      formData.append('file', markdownBlob, `${Date.now()}.md`);
-      formData.append('type', 'tech'); // 指定文章类型
-
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json();
-        throw new Error(error.error || '上传文件失败');
+      if (articleSettings.sourceType !== 'local' && !articleSettings.externalUrl.trim()) {
+        throw new Error('请填写飞书文档或外部文章链接');
       }
 
-      const { url: ossPath } = await uploadResponse.json();
+      let ossPath = '';
+      let articleContent = content;
+
+      if (isExternalArticle) {
+        articleContent = `[${articleSettings.title}](${articleSettings.externalUrl.trim()})`;
+      } else {
+        // 1. 上传 Markdown 内容到 OSS
+        const markdownBlob = new Blob([content], { type: 'text/markdown' });
+        const formData = new FormData();
+        formData.append('file', markdownBlob, `${Date.now()}.md`);
+        formData.append('type', 'tech'); // 指定文章类型
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          const error = await uploadResponse.json();
+          throw new Error(error.error || '上传文件失败');
+        }
+
+        const uploadResult = await uploadResponse.json();
+        ossPath = uploadResult.url;
+      }
 
       // 2. 保存文章信息
       const response = await articlesService.createArticle({
         title: articleSettings.title,
-        content,
+        content: articleContent,
         ossPath,
         categoryId: articleSettings.categoryId,
         status: articleSettings.status,
+        sourceType: articleSettings.sourceType,
+        externalUrl: articleSettings.externalUrl.trim() || undefined,
         createdAt: new Date().toISOString(),
       });
 
@@ -169,6 +186,29 @@ export default function NewArticlePage() {
               ))}
             </Select>
           </div>
+          <div>
+            <Typography.Text>文章来源</Typography.Text>
+            <Select
+              value={articleSettings.sourceType}
+              onChange={(value) => setArticleSettings(prev => ({ ...prev, sourceType: value }))}
+              className="w-full mt-1"
+            >
+              <Option value="local">本站文章</Option>
+              <Option value="feishu">飞书文档/知识库</Option>
+              <Option value="external">外部链接</Option>
+            </Select>
+          </div>
+          {articleSettings.sourceType !== 'local' && (
+            <div>
+              <Typography.Text>文章外链</Typography.Text>
+              <Input
+                value={articleSettings.externalUrl}
+                onChange={(e) => setArticleSettings(prev => ({ ...prev, externalUrl: e.target.value }))}
+                className="mt-1"
+                placeholder="https://... 飞书文档或知识库链接"
+              />
+            </div>
+          )}
           <div>
             <Typography.Text>文章状态</Typography.Text>
             <Select
