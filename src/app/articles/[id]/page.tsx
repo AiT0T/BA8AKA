@@ -11,6 +11,7 @@ import { useLocalCache } from "@/app/hooks/useLocalCache";
 import { articlesService } from "@/app/business/articles";
 import { verifyService } from "@/app/business/verify";
 import { scrollToHeading } from "@/utils/heading-utils";
+import { getArticleExternalUrl } from "@/utils/article-links";
 
 // 动态导入 MarkdownRenderer 组件，禁用 SSR
 const MarkdownRenderer = dynamic(
@@ -110,6 +111,12 @@ export default function ArticleDetailPage() {
       try {
         setLoading(true);
         const articleData = await articlesService.getArticle(params.id as string);
+        const externalUrl = getArticleExternalUrl(articleData);
+        if (externalUrl) {
+          window.location.replace(externalUrl);
+          return;
+        }
+
         // 设置文章数据
         setArticle(articleData);
 

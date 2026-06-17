@@ -180,7 +180,7 @@ export const PUT = withErrorHandler(async (request: Request) => {
   }
 
   const articleToUpdate: Partial<ArticleDocument> = {
-    ...RequestValidator.sanitize(article, ['title', 'content', 'categoryId', 'order', 'status']),
+    ...RequestValidator.sanitize(article, ['title', 'content', 'categoryId', 'order', 'status', 'summary', 'coverImage', 'tags', 'sourceType', 'externalUrl']),
     updatedAt: new Date().toISOString(),
   };
 

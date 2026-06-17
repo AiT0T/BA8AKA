@@ -13,6 +13,12 @@ export interface Article {
   // 文章链接(slug)
   url?: string;
 
+  // 外部文章链接，例如飞书文档或飞书知识库节点
+  externalUrl?: string;
+
+  // 内容来源
+  sourceType?: 'local' | 'feishu' | 'external';
+
   // 文章分类
   category?: string;
 
