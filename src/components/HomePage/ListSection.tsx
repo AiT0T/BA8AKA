@@ -3,6 +3,7 @@ import ViewCounter from "./ViewCounter";
 import LikeButton from "./LikeButton";
 import { Article } from "@/app/model/article";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import { getArticleHref, isExternalArticle } from "@/utils/article-links";
 
 interface ListSectionProps {
   title: string;
@@ -35,11 +36,14 @@ export const ListSection = ({ title, titleLink, items }: ListSectionProps) => {
           {items?.map((item, idx) => {
             const date = new Date(item.createdAt!);
             const isSameYear = idx === 0 || date.getFullYear() !== new Date(items[idx - 1].createdAt!).getFullYear();
+            const external = isExternalArticle(item);
 
             return (
               <Link
                 key={item._id?.toString() || ""}
-                href={`/articles/${item._id?.toString() || ""}`}
+                href={getArticleHref(item)}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noopener noreferrer" : undefined}
                 className="col-span-6 hover:text-gray-700"
               >
                 <div className="grid grid-cols-6">
