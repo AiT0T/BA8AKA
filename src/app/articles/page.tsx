@@ -7,6 +7,7 @@ import { ArticleSkeleton, ArticleSkeletonDesktop, CategorySkeleton } from './com
 import { MobileView } from './components/MobileView';
 import { DesktopView } from './components/DesktopView';
 import { articlesService } from '../business/articles';
+import { getArticleExternalUrl } from '@/utils/article-links';
 
 export default function ArticlesPage() {
   const router = useRouter();
@@ -118,6 +119,12 @@ export default function ArticlesPage() {
   }, [fetchArticles, isMobileView, selectedCategory, cacheArticles]);
 
   const handleArticleClick = (article: Article) => {
+    const externalUrl = getArticleExternalUrl(article);
+    if (externalUrl) {
+      window.open(externalUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     if (isMobileView) {
       window.location.href = `/articles/${article._id}`;
     } else {
