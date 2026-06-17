@@ -58,8 +58,15 @@ const EditArticlePage = ({ params }: { params: { id: string } }) => {
   const handleSave = async (status?: ArticleStatus) => {
     try {
       setSaving(true);
+      if ((article.sourceType === 'feishu' || article.sourceType === 'external') && !article.externalUrl?.trim()) {
+        message.error('请填写文章外链');
+        return;
+      }
+
       const updatedArticle = {
         ...article,
+        sourceType: article.sourceType || 'local',
+        externalUrl: article.externalUrl?.trim() || undefined,
         tags,
         status: status || article.status,
         updatedAt: new Date().toISOString(),
@@ -204,6 +211,30 @@ const EditArticlePage = ({ params }: { params: { id: string } }) => {
               </Select>
             </Form.Item>
           </div>
+          <div>
+            <Form.Item label="文章来源">
+              <Select
+                value={article.sourceType || 'local'}
+                onChange={value => setArticle({ ...article, sourceType: value })}
+                style={{ width: '100%' }}
+              >
+                <Select.Option value="local">本站文章</Select.Option>
+                <Select.Option value="feishu">飞书文档/知识库</Select.Option>
+                <Select.Option value="external">外部链接</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
+          {(article.sourceType === 'feishu' || article.sourceType === 'external') && (
+            <div className="col-span-2">
+              <Form.Item label="文章外链" required>
+                <Input
+                  value={article.externalUrl || ''}
+                  onChange={e => setArticle({ ...article, externalUrl: e.target.value })}
+                  placeholder="https://... 飞书文档或知识库链接"
+                />
+              </Form.Item>
+            </div>
+          )}
         </div>
 
         {/* 标签管理 */}
@@ -253,35 +284,53 @@ const EditArticlePage = ({ params }: { params: { id: string } }) => {
           />
         </Form.Item>
 
-        {/* 文章内容编辑按钮 */}
-        <Form.Item
-          label={
-            <div className="flex justify-between items-center w-full">
-              <span>文章内容</span>
-              <Link
-                href={`/admin/articles/edit/${params.id}/content`}
-                className="text-blue-500 hover:text-blue-600"
-              >
-                <Space>
-                  <EditOutlined />
-                  编辑内容
-                </Space>
-              </Link>
+        {(article.sourceType === 'feishu' || article.sourceType === 'external') ? (
+          <Form.Item label="外部文章">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              {article.externalUrl ? (
+                <Link
+                  href={article.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600"
+                >
+                  打开外部文章
+                </Link>
+              ) : (
+                <Text type="secondary">请先填写文章外链</Text>
+              )}
             </div>
-          }
-        >
-          <div className="p-4 bg-gray-50 rounded-lg">
-            {article.content ? (
-              <div className="prose max-w-none">
-                <Text className="line-clamp-3 text-gray-600">
-                  {article.content}
-                </Text>
+          </Form.Item>
+        ) : (
+          <Form.Item
+            label={
+              <div className="flex justify-between items-center w-full">
+                <span>文章内容</span>
+                <Link
+                  href={`/admin/articles/edit/${params.id}/content`}
+                  className="text-blue-500 hover:text-blue-600"
+                >
+                  <Space>
+                    <EditOutlined />
+                    编辑内容
+                  </Space>
+                </Link>
               </div>
-            ) : (
-              <Text type="secondary">暂无内容</Text>
-            )}
-          </div>
-        </Form.Item>
+            }
+          >
+            <div className="p-4 bg-gray-50 rounded-lg">
+              {article.content ? (
+                <div className="prose max-w-none">
+                  <Text className="line-clamp-3 text-gray-600">
+                    {article.content}
+                  </Text>
+                </div>
+              ) : (
+                <Text type="secondary">暂无内容</Text>
+              )}
+            </div>
+          </Form.Item>
+        )}
       </Form>
     </div>
   );
